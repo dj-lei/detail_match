@@ -5,11 +5,11 @@ ENCODING = 'utf-8'
 ##########################
 
 # 运行环境[PRODUCT,TEST,LOCAL]
-RUNTIME_ENVIRONMENT = 'PRODUCT'
+RUNTIME_ENVIRONMENT = 'LOCAL'
 
 if RUNTIME_ENVIRONMENT == 'LOCAL':
     # 生产库外网
-    PRODUCE_DB_ADDR_OUTTER = '101.201.143.74'
+    PRODUCE_DB_ADDR_OUTTER = '101.201.148.49'
     PRODUCE_DB_USER = 'leidengjun'
     PRODUCE_DB_PASSWD = 'ldj_DEV_~!'
     PRODUCE_PINGJIA_ENGINE = 'mysql+pymysql://' + PRODUCE_DB_USER + ':' + PRODUCE_DB_PASSWD + '@' + PRODUCE_DB_ADDR_OUTTER + '/pingjia?charset=utf8'

@@ -9,7 +9,7 @@ RATE_DROP_LSTM = 0.15
 RATE_DROP_DENSE = 0.15
 ACT = 'relu'
 EPOCHS = 50
-VERBOSE = 0
+VERBOSE = 1
 SEED = 7
 
 # 预测阈值

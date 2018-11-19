@@ -17,10 +17,10 @@ def store_train_relative_data():
         del open_category
         gc.collect()
 
-        model_detail_normal = db_operate.query_produce_model_detail_normal()
-        model_detail_normal.to_csv(path+'../tmp/train/model_detail_normal.csv', index=False)
-        del model_detail_normal
-        gc.collect()
+        # model_detail_normal = db_operate.query_produce_model_detail_normal()
+        # model_detail_normal.to_csv(path+'../tmp/train/model_detail_normal.csv', index=False)
+        # del model_detail_normal
+        # gc.collect()
 
         print('Download finish!')
     except Exception:

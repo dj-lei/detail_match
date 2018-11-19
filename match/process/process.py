@@ -11,21 +11,22 @@ class Process(object):
         """
         处理所有车型
         """
-        try:
-            time1 = time.time()
-            # 存储训练相关表
-            process_tables.store_train_relative_data()
-            # 特征工程
-            fe = FeatureEngineering()
-            fe.execute()
-            # 训练模型
-            stack = Stacking()
-            stack.execute()
-            time2 = time.time()
-            print('cost time', time2-time1)
+        # try:
+        time1 = time.time()
+        print('start project!')
+        # 存储训练相关表
+        # process_tables.store_train_relative_data()
+        # # 特征工程
+        # fe = FeatureEngineering()
+        # fe.execute()
+        # 训练模型
+        stack = Stacking()
+        stack.execute()
+        time2 = time.time()
+        print('cost time', time2-time1)
 
-        except Exception as e:
-            db_operate.insert_valuate_error_info(e)
+        # except Exception as e:
+        #     db_operate.insert_valuate_error_info(e)
 
     def predict_all_car_source(self):
         """
