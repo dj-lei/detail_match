@@ -24,7 +24,7 @@ class Stacking(object):
         self.labels_final = []
         self.word_index = []
         self.train = []
-        self.word2vec = []
+        self.word2vec = Word2Vec.load(path + 'predict/model/word2vec.bin')
         self.open_category = []
         self.brand = []
         self.model = []
@@ -89,6 +89,12 @@ class Stacking(object):
         self.train_final = []
         self.labels_final = []
 
+        # 拷贝副本
+        temp = data.copy()
+        for i in range(0, als.COPY_DOSE):
+            data = data.append(temp)
+        data.reset_index(inplace=True, drop=True)
+
         for i in range(0, len(data)):
             temp = []
             x = data['final_text'][i]
@@ -132,7 +138,7 @@ class Stacking(object):
         embedding_matrix = np.zeros(((min(max_nb_words, len(self.word_index))+1), embedding_dim))
         for word, i in self.word_index.items():
             embedding_matrix[i] = self.word2vec[word]
-        print('Null word embeddings: %d' % np.sum(np.sum(embedding_matrix, axis=1) == 0))
+        # print('Null word embeddings: %d' % np.sum(np.sum(embedding_matrix, axis=1) == 0))
 
         embedding_layer = Embedding((min(max_nb_words, len(self.word_index))+1),
                                     als.EMBEDDING_DIM,
@@ -202,7 +208,8 @@ class Stacking(object):
         model_map.reset_index(inplace=True, drop=True)
         exception_model_predict = []
 
-        for i, brand_slug in enumerate(list(set(model_map.brand_slug.values))):
+        # for i, brand_slug in enumerate(list(set(model_map.brand_slug.values))):
+        for i, brand_slug in enumerate(['dazhong']):
             print(i, 'start model train:', brand_slug)
             # 定位品牌
             train = self.train.loc[(self.train['brand_slug'] == brand_slug), :]
@@ -256,7 +263,8 @@ class Stacking(object):
         detail_map.reset_index(inplace=True, drop=True)
         exception_model_predict = []
 
-        for i, brand_slug in enumerate(list(set(detail_map.brand_slug.values))):
+        # for i, brand_slug in enumerate(list(set(detail_map.brand_slug.values))):
+        for i, brand_slug in enumerate(['dazhong']):
             print(i, 'start model train:', brand_slug)
             # 定位品牌
             train = self.train.loc[(self.train['brand_slug'] == brand_slug), :]
@@ -313,7 +321,7 @@ class Stacking(object):
             # 训练品牌预测模型
             # self.train_brand_model()
             # # 训练车型预测模型
-            # self.train_model_model()
+            self.train_model_model()
             # # 训练款型预测模型
             self.train_details_model()
         except Exception:

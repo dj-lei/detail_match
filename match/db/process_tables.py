@@ -57,7 +57,7 @@ def store_predict_data(start_time, end_time):
         # 查询生产新发布数据
         data = db_operate.query_model_product_source_data(start_time, end_time)
         # 查询爬虫更新过的数据
-        data = data.append(db_operate.query_spider_update_product_source_data(start_time, end_time))
+        # data = data.append(db_operate.query_spider_update_product_source_data(start_time, end_time))
 
         os.makedirs(os.path.dirname(path + '../tmp/train/predict.csv'), exist_ok=True)
         data.to_csv(path + '../tmp/train/predict.csv', index=False)

@@ -1,10 +1,11 @@
 from match.predict import *
 
 
-def delete_str_useless(text):
+def delete_str_useless(df, column_name):
     """
     删除没用的字符
     """
+    text = df[column_name]
     text = text.replace('[', '')
     text = text.replace(']', '')
     text = text.replace('【', '')
@@ -38,21 +39,7 @@ def delete_str_useless(text):
     text = text.replace('─', '')
     text = text.replace('、', '')
     text = text.replace(' ', '')
-    return text
-
-
-def clean_str(df):
-    """
-    清洗title
-    """
-    text = df['title']
     text = text.lower()
-    year = re.findall(r"\d\d\d\d款", text)
-    if len(year) == 0:
-        return 'N'
-    text = re.sub(r"\d\d\d\d款", '', text)
-    text = year[0] + text
-    text = delete_str_useless(text)
     return text
 
 
@@ -73,25 +60,23 @@ class Predict(object):
         加载各类匹配表和模型
         """
         self.test = pd.DataFrame()
-        self.brand_map = pd.read_csv(path + 'predict/map/brand_map.csv')
-        self.model_map = pd.read_csv(path + 'predict/map/model_map.csv')
-        self.detail_map = pd.read_csv(path + 'predict/map/detail_map.csv')
-        self.exception_model = pd.read_csv(path + 'predict/model/brand/exception_model_predict.csv')
-        self.exception_detail = pd.read_csv(path + 'predict/model/brand/exception_detail_predict.csv')
+        self.brand_map = pd.read_csv(path + 'predict/map/brand_map.csv', encoding='gb18030')
+        self.model_map = pd.read_csv(path + 'predict/map/model_map.csv', encoding='gb18030')
+        self.detail_map = pd.read_csv(path + 'predict/map/detail_map.csv', encoding='gb18030')
+        self.exception_model = pd.read_csv(path + 'predict/model/brand/exception_model_predict.csv', encoding='gb18030')
+        self.exception_detail = pd.read_csv(path + 'predict/model/brand/exception_detail_predict.csv', encoding='gb18030')
 
     def base_clean(self):
         """
         基本清洗
         """
         # 加载原始训练数据
-        self.test = pd.read_csv(path + '../tmp/train/predict.csv')
-        self.test = self.test.loc[(~self.test['brand_slug'].isin(list(self.exception_model.exception_brand.values))), :]
-        self.test = self.test.loc[(~self.test['brand_slug'].isin(list(self.exception_detail.exception_brand.values))), :]
-        self.test.reset_index(inplace=True, drop=True)
-        self.test['text'] = self.test.apply(clean_str, axis=1)
-        self.test = self.test.loc[(self.test['text'] != 'N'), :]
-        self.test.reset_index(inplace=True, drop=True)
-        return False
+        self.test = pd.read_csv(path + '../tmp/train/predict.csv', encoding='gb18030')
+        # self.test = self.test.loc[(~self.test['brand_slug'].isin(list(self.exception_model.exception_brand.values))), :]
+        # self.test = self.test.loc[(~self.test['brand_slug'].isin(list(self.exception_detail.exception_brand.values))), :]
+        # self.test.reset_index(inplace=True, drop=True)
+        self.test['text'] = self.test.apply(delete_str_useless, args=('title',), axis=1)
+        return
 
     def create_test_final(self, data):
         """
@@ -153,7 +138,7 @@ class Predict(object):
         for brand_slug in brand_slugs:
             brand_data = self.test.loc[(self.test['predict_brand_slug'] == brand_slug), :]
             brand_data.reset_index(inplace=True, drop=True)
-            model_map = pd.read_csv(path + 'predict/model/brand/' + brand_slug + '/model_map.csv')
+            model_map = pd.read_csv(path + 'predict/model/brand/' + brand_slug + '/model_map.csv', encoding='gb18030')
             # 如果只有一个车型直接赋值
             if len(model_map) == 1:
                 brand_data['predict_model_slug'] = list(model_map.global_slug.values)[0]
@@ -198,7 +183,7 @@ class Predict(object):
         for brand_slug in brand_slugs:
             brand_data = self.test.loc[(self.test['predict_brand_slug'] == brand_slug), :]
             brand_data.reset_index(inplace=True, drop=True)
-            detail_map = pd.read_csv(path + 'predict/model/brand/' + brand_slug + '/detail_map.csv')
+            detail_map = pd.read_csv(path + 'predict/model/brand/' + brand_slug + '/detail_map.csv', encoding='gb18030')
             # 如果只有一个车型直接赋值
             if len(detail_map) == 1:
                 brand_data['predict_model_detail_slug'] = list(detail_map.model_detail_slug.values)[0]
@@ -316,13 +301,16 @@ class Predict(object):
             # 基本清洗
             self.base_clean()
             # 预测品牌
-            self.predict_brand()
+            # self.predict_brand()
             # 预测车型
             self.predict_model()
             # 预测款型
             self.predict_detail()
+
+            # self.test = self.test.drop(['id', 'price_bn', 'year', 'volume', 'control', 'detail_model','brand_slug'], axis=1)
+            self.test.to_csv(path + '../tmp/train/car_detail_info.csv', index=False)
             # 将深度学习与先前流程匹配不一致的存入数据库
-            self.insert_error_match_data()
+            # self.insert_error_match_data()
             # 更新数据
             # self.update_database()
         except Exception:
