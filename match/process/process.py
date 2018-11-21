@@ -47,9 +47,9 @@ class Process(object):
         """
         try:
             # time_node = (datetime.datetime.now() - datetime.timedelta(days=180)).strftime('%Y-%m-%d')
-            # start_time_node = time_node + ' 00:00:00'
-            # end_time_node = time_node + ' 23:59:59'
-            # # 查询car_source需要预测记录
+            # start_time_node = '2018-01-01 00:00:00'
+            # end_time_node = '2018-11-21 23:59:59'
+            # 查询car_source需要预测记录
             # process_tables.store_predict_data(start_time_node, end_time_node)
             # 预测品牌
             predict = Predict()

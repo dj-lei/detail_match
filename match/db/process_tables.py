@@ -59,8 +59,8 @@ def store_predict_data(start_time, end_time):
         # 查询爬虫更新过的数据
         # data = data.append(db_operate.query_spider_update_product_source_data(start_time, end_time))
 
-        os.makedirs(os.path.dirname(path + '../tmp/train/predict.csv'), exist_ok=True)
-        data.to_csv(path + '../tmp/train/predict.csv', index=False)
+        os.makedirs(os.path.dirname(path + '../tmp/train/wait_predict.csv'), exist_ok=True)
+        data.to_csv(path + '../tmp/train/wait_predict.csv', index=False)
         print('Download finish!')
     except Exception:
         raise SqlOperateError(traceback.format_exc())

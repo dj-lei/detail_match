@@ -58,9 +58,8 @@ def query_model_product_source_data(start_time, end_time):
     """
     查询生产库交易训练数据
     """
-    query_sql = 'select cs.id,cs.title,cs.brand_slug,cs.model_slug,cs.model_detail_slug,cdi.mdn_status from pingjia.car_source as cs ' \
-                'left join pingjia.car_detail_info as cdi on cs.id = cdi.car_id ' \
-                'where cs.pub_time >= \''+start_time+'\' and cs.pub_time <= \''+ end_time +'\' '
+    query_sql = 'select cs.id,cs.title,cs.brand_slug,cs.model_slug,cs.model_detail_slug,cs.domain from pingjia.car_source as cs ' \
+                'where model_detail_slug is not null and global_sibling = 0 and cs.pub_time >= \''+start_time+'\' and cs.pub_time <= \''+ end_time +'\' '
 
     engine = create_engine(gl.PRODUCE_PINGJIA_ENGINE, encoding=gl.ENCODING)
     return pd.read_sql_query(query_sql, engine)
