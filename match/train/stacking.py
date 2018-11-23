@@ -35,16 +35,16 @@ class Stacking(object):
         """
         初始化变量
         """
-        self.train = pd.read_csv(path + '../tmp/train/train_final.csv', encoding='gb18030')
+        self.train = pd.read_csv(path + '../tmp/train/train_final.csv')
         self.word2vec = Word2Vec.load(path + 'predict/model/word2vec.bin')
-        self.open_category = pd.read_csv(path + '../tmp/train/open_category.csv', encoding='gb18030')
+        self.open_category = pd.read_csv(path + '../tmp/train/open_category.csv')
         self.brand = self.open_category.loc[(self.open_category['parent'].isnull()), ['name', 'slug']].rename(
             columns={'name': 'brand_name', 'slug': 'brand_slug'})
         self.model = self.open_category.loc[
             (self.open_category['parent'].notnull()), ['name', 'slug', 'parent']].rename(
             columns={'name': 'global_name', 'slug': 'global_slug', 'parent': 'brand_slug'})
         self.model = self.model.merge(self.brand, how='left', on=['brand_slug'])
-        self.open_model_detail = pd.read_csv(path + '../tmp/train/open_model_detail.csv', encoding='gb18030')
+        self.open_model_detail = pd.read_csv(path + '../tmp/train/open_model_detail.csv')
         self.details = self.open_model_detail.loc[:, ['detail_model', 'model_detail_slug', 'global_slug']].rename(
             columns={'detail_model': 'detail_name'})
         self.details = self.details.merge(self.model, how='left', on=['global_slug'])
@@ -126,8 +126,8 @@ class Stacking(object):
         定义模型结构
         """
         # 加载词典
-        # f = open(path + 'predict/model/word_index.txt', 'r', encoding='UTF-8')
-        f = open(path + 'predict/model/word_index.txt', 'r', encoding='gb18030')
+        f = open(path + 'predict/model/word_index.txt', 'r', encoding='UTF-8')
+        # f = open(path + 'predict/model/word_index.txt', 'r', encoding='gb18030')
         temp = f.read()
         self.word_index = eval(temp)
         f.close()
@@ -182,7 +182,7 @@ class Stacking(object):
         """
         self.create_x_y_data(self.train_final, self.labels_final)
 
-        brand_map = pd.read_csv(path + 'predict/map/brand_map.csv', encoding='gb18030')
+        brand_map = pd.read_csv(path + 'predict/map/brand_map.csv')
         model = self.define_brand_model_structure(als.MAX_NB_WORDS, als.EMBEDDING_DIM, als.MAX_SEQUENCE_LENGTH, als.NUM_LSTM,
                                                   als.RATE_DROP_LSTM, als.RATE_DROP_DENSE, als.NUM_DENSE, als.ACT, len(brand_map))
         # 设置随机种子
@@ -203,7 +203,7 @@ class Stacking(object):
         """
         训练车型模型并保存
         """
-        model_map = pd.read_csv(path + 'predict/map/model_map.csv', encoding='gb18030')
+        model_map = pd.read_csv(path + 'predict/map/model_map.csv')
         model_map = model_map.loc[(model_map['brand_slug'].notnull()), :]
         model_map.reset_index(inplace=True, drop=True)
         exception_model_predict = []
@@ -258,7 +258,7 @@ class Stacking(object):
         """
         训练款型模型并保存
         """
-        detail_map = pd.read_csv(path + 'predict/map/detail_map.csv', encoding='gb18030')
+        detail_map = pd.read_csv(path + 'predict/map/detail_map.csv')
         detail_map = detail_map.loc[(detail_map['brand_slug'].notnull()), :]
         detail_map.reset_index(inplace=True, drop=True)
         exception_model_predict = []
@@ -315,9 +315,9 @@ class Stacking(object):
         """
         try:
             self.init_variable()
-            # self.define_predict_map()
-            # self.combine_train_label(self.train, 'brand_id')
-            # self.create_tokenizer()
+            self.define_predict_map()
+            self.combine_train_label(self.train, 'brand_id')
+            self.create_tokenizer()
             # 训练品牌预测模型
             # self.train_brand_model()
             # # 训练车型预测模型

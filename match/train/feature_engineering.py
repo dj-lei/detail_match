@@ -71,8 +71,8 @@ class FeatureEngineering(object):
     def __init__(self):
         self.train = []
         # 加载各类相关表
-        self.open_category = pd.read_csv(path + '../tmp/train/open_category.csv', encoding='gb18030')
-        self.open_model_detail = pd.read_csv(path + '../tmp/train/open_model_detail.csv', encoding='gb18030')
+        self.open_category = pd.read_csv(path + '../tmp/train/open_category.csv')
+        self.open_model_detail = pd.read_csv(path + '../tmp/train/open_model_detail.csv')
 
     def execute(self):
         """
@@ -107,7 +107,7 @@ class FeatureEngineering(object):
                                                                        axis=1)
 
             final = pd.DataFrame([], columns=['detail_model', 'model_detail_slug'])
-            final.to_csv('../tmp/train/step1.csv', index=False)
+            final.to_csv(path + '../tmp/train/step1.csv', index=False)
             for i in range(0, len(open_model_detail)):
                 detail_model = open_model_detail.loc[i, 'detail_model']
                 detail_model = detail_model.split(' ')
@@ -118,12 +118,12 @@ class FeatureEngineering(object):
                 final = final.append(temp)
                 final.reset_index(inplace=True, drop=True)
                 if (i % 1000) == 0:
-                    final.to_csv('../tmp/train/step1.csv', header=False, mode='a', index=False)
+                    final.to_csv(path + '../tmp/train/step1.csv', header=False, mode='a', index=False)
                     final = pd.DataFrame([], columns=['detail_model', 'model_detail_slug'])
                 elif i == (len(open_model_detail) - 1):
-                    final.to_csv('../tmp/train/step1.csv', header=False, mode='a', index=False)
+                    final.to_csv(path + '../tmp/train/step1.csv', header=False, mode='a', index=False)
 
-            final = pd.read_csv('../tmp/train/step1.csv', encoding='gb18030')
+            final = pd.read_csv(path + '../tmp/train/step1.csv')
             open_model_detail = open_model_detail.drop(['detail_model'], axis=1)
             self.train = open_model_detail.merge(final, how='left', on=['model_detail_slug'])
             self.train.reset_index(inplace=True, drop=True)
