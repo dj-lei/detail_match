@@ -18,7 +18,6 @@ def delete_str_useless(df, column_name):
     text = text.replace('-', '')
     text = text.replace('+', '')
     text = text.replace('—', '')
-    text = text.replace('\xa0', '')
     text = text.replace('/', '')
     text = text.replace('“', '')
     text = text.replace('”', '')
@@ -46,33 +45,26 @@ def final_process(df):
     """
     最终处理
     """
-    text = df['detail_model']
-    text = df['global_name']+text
+    text = df['detail_name']
+    text = df['model_name']+text
     text = text.replace(' ', '')
     return text
 
 
-def all_arrange(n, begin, end, result):
+def cal_online_year(df):
     """
-    list全排列
+    查找年款
     """
-    if begin >= end:
-        result.append(' '.join(n))
-    else:
-        i = begin
-        for num in range(begin, end):
-            n[num], n[i] = n[i], n[num]
-            all_arrange(n, begin+1, end, result)
-            n[num], n[i] = n[i], n[num]
+    regex = re.compile("(\d+)款")
+    result = regex.findall(df['detail_name'])
+    return result[0]
 
 
 class FeatureEngineering(object):
 
     def __init__(self):
-        self.train = []
         # 加载各类相关表
-        self.open_category = pd.read_csv(path + '../tmp/train/open_category.csv')
-        self.open_model_detail = pd.read_csv(path + '../tmp/train/open_model_detail.csv')
+        self.car_autohome_all = pd.read_csv(path + '../tmp/train/car_autohome_all.csv')
 
     def execute(self):
         """
@@ -82,7 +74,9 @@ class FeatureEngineering(object):
             # 基本清洗
             self.base_clean()
             # 生成语料库
-            self.create_word2vec()
+            # self.create_word2vec()
+            # # 创建语料库映射器
+            # self.create_tokenizer()
         except Exception:
             raise FeatureEngineeringError(traceback.format_exc())
 
@@ -91,46 +85,12 @@ class FeatureEngineering(object):
         数据常规预处理
         """
         try:
-            # 处理open_model_detail表text字段
-            open_category = self.open_category.loc[(self.open_category['parent'].notnull()), :]
-            open_category = open_category.rename(
-                columns={'slug': 'global_slug', 'parent': 'brand_slug', 'name': 'global_name'})
-            open_category = open_category.loc[:, ['global_slug', 'brand_slug', 'global_name']]
-
-            open_model_detail = self.open_model_detail.merge(open_category, how='left', on=['global_slug'])
-            open_model_detail = open_model_detail.loc[(open_model_detail['brand_slug'].notnull()) & (
-                open_model_detail['global_slug'].notnull()), :]
-            open_model_detail.reset_index(inplace=True, drop=True)
-            open_model_detail['detail_model'] = open_model_detail.apply(delete_str_useless, args=('detail_model',),
-                                                                        axis=1)
-            open_model_detail['global_name'] = open_model_detail.apply(delete_str_useless, args=('global_name',),
-                                                                       axis=1)
-
-            final = pd.DataFrame([], columns=['detail_model', 'model_detail_slug'])
-            final.to_csv(path + '../tmp/train/step1.csv', index=False)
-            for i in range(0, len(open_model_detail)):
-                detail_model = open_model_detail.loc[i, 'detail_model']
-                detail_model = detail_model.split(' ')
-                result = []
-                all_arrange(detail_model, 0, len(detail_model), result)
-                temp = pd.DataFrame(pd.Series(result), columns=['detail_model'])
-                temp['model_detail_slug'] = open_model_detail.loc[i, 'model_detail_slug']
-                final = final.append(temp)
-                final.reset_index(inplace=True, drop=True)
-                if (i % 1000) == 0:
-                    final.to_csv(path + '../tmp/train/step1.csv', header=False, mode='a', index=False)
-                    final = pd.DataFrame([], columns=['detail_model', 'model_detail_slug'])
-                elif i == (len(open_model_detail) - 1):
-                    final.to_csv(path + '../tmp/train/step1.csv', header=False, mode='a', index=False)
-
-            final = pd.read_csv(path + '../tmp/train/step1.csv')
-            open_model_detail = open_model_detail.drop(['detail_model'], axis=1)
-            self.train = open_model_detail.merge(final, how='left', on=['model_detail_slug'])
-            self.train.reset_index(inplace=True, drop=True)
-            self.train['final_text'] = self.train.apply(final_process, axis=1)
-            self.train = self.train.loc[:, ['brand_slug', 'global_slug', 'model_detail_slug', 'year', 'final_text']]
+            self.car_autohome_all['detail_name'] = self.car_autohome_all.apply(delete_str_useless, args=('detail_name', ), axis=1)
+            self.car_autohome_all['online_year'] = self.car_autohome_all.apply(cal_online_year, axis=1)
+            self.car_autohome_all['final_text'] = self.car_autohome_all.apply(final_process, axis=1)
+            self.car_autohome_all = self.car_autohome_all.loc[:, ['brand_slug', 'brand_name', 'model_slug', 'model_name', 'detail_slug', 'detail_name', 'online_year', 'final_text']]
             # 存储中间文件
-            self.train.to_csv(path + '../tmp/train/train_final.csv', index=False)
+            self.car_autohome_all.to_csv(path + '../tmp/train/train_final.csv', index=False)
 
         except Exception:
             raise FeatureEngineeringError(traceback.format_exc())
@@ -142,8 +102,8 @@ class FeatureEngineering(object):
         try:
             texts = []
 
-            for i in range(0, len(self.train)):
-                texts.extend(self.train['final_text'][i])
+            for i in range(0, len(self.car_autohome_all)):
+                texts.extend(self.car_autohome_all['final_text'][i])
 
             model = Word2Vec(texts, min_count=1, size=100)
             os.makedirs(os.path.dirname(path + 'predict/model/word2vec.bin'), exist_ok=True)
@@ -151,3 +111,28 @@ class FeatureEngineering(object):
         except Exception:
             raise FeatureEngineeringError(traceback.format_exc())
 
+    def create_tokenizer(self):
+        """
+        创建语料库映射器
+        """
+        train_final = []
+
+        for i in range(0, len(self.car_autohome_all)):
+            temp = []
+            x = self.car_autohome_all['final_text'][i]
+            temp.extend(x)
+            train_final.append(' '.join(temp))
+
+        # 创建Tokenizer
+        tokenizer = Tokenizer(num_words=als.MAX_NB_WORDS, lower=False)
+        tokenizer.fit_on_texts(train_final)
+        word_index = tokenizer.word_index
+        print('Found %s unique tokens' % len(word_index))
+
+        # 保存映射器和词典
+        with open(path + 'predict/model/tokenizer.pickle', 'wb') as handle:
+            pickle.dump(tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        f = open(path + 'predict/model/word_index.txt', 'w')
+        f.write(str(word_index))
+        f.close()

@@ -18,7 +18,6 @@ def delete_str_useless(df, column_name):
     text = text.replace('-', '')
     text = text.replace('+', '')
     text = text.replace('—', '')
-    text = text.replace('\xa0', '')
     text = text.replace('/', '')
     text = text.replace('“', '')
     text = text.replace('”', '')
@@ -61,8 +60,6 @@ class Predict(object):
         """
         self.test = pd.DataFrame()
         self.brand_map = pd.read_csv(path + 'predict/map/brand_map.csv')
-        self.model_map = pd.read_csv(path + 'predict/map/model_map.csv')
-        self.detail_map = pd.read_csv(path + 'predict/map/detail_map.csv')
         self.exception_model = pd.read_csv(path + 'predict/model/brand/exception_model_predict.csv')
         self.exception_detail = pd.read_csv(path + 'predict/model/brand/exception_detail_predict.csv')
 
@@ -216,65 +213,6 @@ class Predict(object):
         self.test = self.test.merge(result, how='left', on=['id'])
         self.test.reset_index(inplace=True, drop=True)
 
-    def filter_data(self):
-        """
-        过滤掉匹配有问题的数据
-        """
-        detail_map = self.detail_map.loc[:, ['brand_slug', 'global_slug', 'model_detail_slug']]
-        detail_map = detail_map.rename(columns={'brand_slug': 'predict_brand_slug', 'global_slug': 'predict_model_slug', 'model_detail_slug': 'predict_model_detail_slug'})
-        detail_map['key'] = 1
-
-        self.test = self.test.merge(detail_map, how='left', on=['predict_brand_slug', 'predict_model_slug', 'predict_model_detail_slug'])
-        self.test['key'] = self.test['key'].fillna(0)
-        self.test[['brand_slug', 'model_slug', 'model_detail_slug', 'mdn_status']] = self.test.apply(fill_column, axis=1)
-        car_source = self.test.loc[:, ['id', 'brand_slug', 'model_slug', 'model_detail_slug']]
-        car_source.to_csv(path + '../tmp/train/car_source_part.csv', index=False)
-        car_detail_info = self.test.loc[:, ['id', 'mdn_status']]
-        car_detail_info = car_detail_info.rename(columns={'id': 'car_id'})
-        car_detail_info.to_csv(path + '../tmp/train/car_detail_info_part.csv', index=False)
-
-    def update_database(self):
-        """
-        更新数据库
-        """
-        detail_map = self.detail_map.loc[:, ['brand_slug', 'global_slug', 'model_detail_slug']]
-        detail_map = detail_map.rename(columns={'brand_slug': 'predict_brand_slug', 'global_slug': 'predict_model_slug',
-                                                'model_detail_slug': 'predict_model_detail_slug'})
-        detail_map['key'] = 1
-
-        self.test = self.test.merge(detail_map, how='left',
-                                    on=['predict_brand_slug', 'predict_model_slug', 'predict_model_detail_slug'])
-        self.test['key'] = self.test['key'].fillna(0)
-        self.test[['brand_slug', 'model_slug', 'model_detail_slug', 'mdn_status']] = self.test.apply(fill_column, axis=1)
-        # 更新
-        db_operate.update_match(self.test)
-        print('Finish details match!')
-
-    def insert_error_match_data(self):
-        """
-        将深度学习与先前流程匹配不一致的存入数据库
-        """
-        no_match = self.test.copy()
-        detail_map = self.detail_map.loc[:, ['brand_slug', 'brand_name', 'global_slug', 'global_name', 'model_detail_slug', 'detail_name']]
-        detail_map = detail_map.rename(columns={'global_slug': 'model_slug', 'global_name': 'model_name'})
-        # 匹配原始名称
-        no_match = no_match.merge(detail_map, how='left', on=['brand_slug', 'model_slug', 'model_detail_slug'])
-        # 匹配深度学习预测名称
-        detail_map = detail_map.rename(columns={'brand_name': 'predict_brand_name', 'model_name': 'predict_model_name', 'detail_name': 'predict_detail_name',
-                                                'brand_slug': 'predict_brand_slug', 'model_slug': 'predict_model_slug', 'model_detail_slug': 'predict_model_detail_slug'})
-        no_match = no_match.merge(detail_map, how='left', on=['predict_brand_slug', 'predict_model_slug', 'predict_model_detail_slug'])
-        no_match = no_match.loc[(no_match['model_detail_slug'].notnull()), :]
-        no_match = no_match.loc[(no_match['predict_model_detail_slug'].notnull()), :]
-        no_match = no_match.drop_duplicates(['id'])
-        no_match.reset_index(inplace=True, drop=True)
-        no_match = no_match.loc[(no_match['predict_model_detail_slug'] != no_match['model_detail_slug']), :]
-        no_match = no_match.loc[:, ['id','title','mdn_status','brand_slug','brand_name','model_slug','model_name','model_detail_slug','detail_name',
-                                    'predict_brand_slug','predict_brand_name','predict_model_slug','predict_model_name','predict_model_detail_slug','predict_detail_name']]
-        no_match = no_match.sort_values(by=['brand_slug', 'model_slug', 'model_detail_slug'])
-        no_match = no_match.rename(columns={'id': 'car_id'})
-        no_match['create_time'] = datetime.datetime.now()
-        db_operate.insert_valuate_detail_match_error(no_match)
-
     def execute(self):
         """
         执行品牌,车型,款型的预测
@@ -288,31 +226,10 @@ class Predict(object):
             self.predict_model()
             # 预测款型
             self.predict_detail()
-            # 过滤数据
-            self.filter_data()
-        except Exception:
-            raise PredictError(traceback.format_exc())
-
-    def execute_cron(self):
-        """
-        执行品牌,车型,款型的预测
-        """
-        try:
-            # 基本清洗
-            self.base_clean()
-            # 预测品牌
-            # self.predict_brand()
-            # 预测车型
-            self.predict_model()
-            # 预测款型
-            self.predict_detail()
 
             # self.test = self.test.drop(['id', 'price_bn', 'year', 'volume', 'control', 'detail_model','brand_slug'], axis=1)
             self.test.to_csv(path + '../tmp/train/car_detail_info.csv', index=False)
-            # 将深度学习与先前流程匹配不一致的存入数据库
-            # self.insert_error_match_data()
-            # 更新数据
-            # self.update_database()
+
         except Exception:
             raise PredictError(traceback.format_exc())
 

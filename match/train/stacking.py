@@ -25,11 +25,6 @@ class Stacking(object):
         self.word_index = []
         self.train = []
         self.word2vec = Word2Vec.load(path + 'predict/model/word2vec.bin')
-        self.open_category = []
-        self.brand = []
-        self.model = []
-        self.open_model_detail = []
-        self.details = []
 
     def init_variable(self):
         """
@@ -37,50 +32,6 @@ class Stacking(object):
         """
         self.train = pd.read_csv(path + '../tmp/train/train_final.csv')
         self.word2vec = Word2Vec.load(path + 'predict/model/word2vec.bin')
-        self.open_category = pd.read_csv(path + '../tmp/train/open_category.csv')
-        self.brand = self.open_category.loc[(self.open_category['parent'].isnull()), ['name', 'slug']].rename(
-            columns={'name': 'brand_name', 'slug': 'brand_slug'})
-        self.model = self.open_category.loc[
-            (self.open_category['parent'].notnull()), ['name', 'slug', 'parent']].rename(
-            columns={'name': 'global_name', 'slug': 'global_slug', 'parent': 'brand_slug'})
-        self.model = self.model.merge(self.brand, how='left', on=['brand_slug'])
-        self.open_model_detail = pd.read_csv(path + '../tmp/train/open_model_detail.csv')
-        self.details = self.open_model_detail.loc[:, ['detail_model', 'model_detail_slug', 'global_slug']].rename(
-            columns={'detail_model': 'detail_name'})
-        self.details = self.details.merge(self.model, how='left', on=['global_slug'])
-
-    def define_predict_map(self):
-        """
-        定义预测匹配表
-        """
-        brand_map = pd.DataFrame(pd.Series(list(self.brand.brand_slug.values)), columns=['brand_slug']).reset_index()
-        brand_map = brand_map.rename(columns={'index': 'brand_id'})
-        model_map = pd.DataFrame(pd.Series(list(self.model.global_slug.values)), columns=['global_slug']).reset_index()
-        model_map = model_map.rename(columns={'index': 'model_id'})
-        detail_map = pd.DataFrame(pd.Series(list(self.details.model_detail_slug.values)), columns=['model_detail_slug']).reset_index()
-        detail_map = detail_map.rename(columns={'index': 'detail_id'})
-
-        os.makedirs(os.path.dirname(path + 'predict/map/brand_map.csv'), exist_ok=True)
-        brand_map = brand_map.merge(self.brand, how='left', on=['brand_slug'])
-        brand_map = brand_map.loc[(brand_map['brand_slug'].isin(list(set(self.train.brand_slug.values)))), :]
-        brand_map.reset_index(inplace=True, drop=True)
-        brand_map = brand_map.drop(['brand_id'], axis=1).reset_index()
-        brand_map = brand_map.rename(columns={'index': 'brand_id'})
-        brand_map.to_csv(path + 'predict/map/brand_map.csv', index=False)
-        model_map = model_map.merge(self.model, how='left', on=['global_slug'])
-        model_map = model_map.loc[(model_map['global_slug'].isin(list(set(self.train.global_slug.values)))), :]
-        model_map.reset_index(inplace=True, drop=True)
-        model_map = model_map.drop(['model_id'], axis=1).reset_index()
-        model_map = model_map.rename(columns={'index': 'model_id'})
-        model_map.to_csv(path + 'predict/map/model_map.csv', index=False)
-        detail_map = detail_map.merge(self.details, how='left', on=['model_detail_slug'])
-        detail_map = detail_map.loc[(detail_map['model_detail_slug'].isin(list(set(self.train.model_detail_slug.values)))), :]
-        detail_map.reset_index(inplace=True, drop=True)
-        detail_map = detail_map.drop(['detail_id'], axis=1).reset_index()
-        detail_map = detail_map.rename(columns={'index': 'detail_id'})
-        detail_map.to_csv(path + 'predict/map/detail_map.csv', index=False)
-
-        self.train = self.train.merge(brand_map, how='left', on=['brand_slug'])
 
     def combine_train_label(self, data, label_name):
         """
@@ -102,24 +53,6 @@ class Stacking(object):
             self.train_final.append(' '.join(temp))
             self.labels_final.append(data[label_name][i])
 
-    def create_tokenizer(self):
-        """
-        创建语料库映射器
-        """
-        # 创建Tokenizer
-        tokenizer = Tokenizer(num_words=als.MAX_NB_WORDS, lower=False)
-        tokenizer.fit_on_texts(self.train_final)
-        self.word_index = tokenizer.word_index
-        print('Found %s unique tokens' % len(self.word_index))
-
-        # 保存映射器和词典
-        with open(path + 'predict/model/tokenizer.pickle', 'wb') as handle:
-            pickle.dump(tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-        f = open(path + 'predict/model/word_index.txt', 'w')
-        f.write(str(self.word_index))
-        f.close()
-
     def define_brand_model_structure(self, max_nb_words, embedding_dim, max_sequence_length, num_lstm,
                                      rate_drop_lstm, rate_drop_dense, num_dense, act, category_num):
         """
@@ -127,7 +60,6 @@ class Stacking(object):
         """
         # 加载词典
         f = open(path + 'predict/model/word_index.txt', 'r', encoding='UTF-8')
-        # f = open(path + 'predict/model/word_index.txt', 'r', encoding='gb18030')
         temp = f.read()
         self.word_index = eval(temp)
         f.close()
@@ -180,8 +112,18 @@ class Stacking(object):
         """
         训练品牌模型并保存
         """
-        self.create_x_y_data(self.train_final, self.labels_final)
+        train = self.train.copy()
+        # 生成品牌映射表
+        car_brand = pd.DataFrame(pd.Series(list(set(train.brand_slug.values))), columns=['brand_slug'])
+        car_brand = car_brand.reset_index(drop=True).reset_index()
+        car_brand = car_brand.rename(columns={'index': 'brand_id'})
+        os.makedirs(os.path.dirname(path + 'predict/model/brand_map.csv'), exist_ok=True)
+        car_brand.to_csv(path + 'predict/model/brand_map.csv', index=False)
+        car_brand = car_brand.loc[:, ['brand_slug', 'brand_id']]
+        train = train.merge(car_brand, how='left', on=['brand_slug'])
 
+        self.combine_train_label(train, 'brand_id')
+        self.create_x_y_data(self.train_final, self.labels_final)
         brand_map = pd.read_csv(path + 'predict/map/brand_map.csv')
         model = self.define_brand_model_structure(als.MAX_NB_WORDS, als.EMBEDDING_DIM, als.MAX_SEQUENCE_LENGTH, als.NUM_LSTM,
                                                   als.RATE_DROP_LSTM, als.RATE_DROP_DENSE, als.NUM_DENSE, als.ACT, len(brand_map))
@@ -190,8 +132,7 @@ class Stacking(object):
         # 早期停止回调
         early_stopping = EarlyStopping(monitor='val_loss', patience=5, verbose=als.VERBOSE, mode='min')
         # 只保存最佳权重
-        mcp_save = ModelCheckpoint(path + 'predict/model/brand_model_weights.hdf5',
-                                   save_best_only=True, monitor='val_loss', mode='min')
+        mcp_save = ModelCheckpoint(path + 'predict/model/brand_model_weights.hdf5', save_best_only=True, monitor='val_loss', mode='min')
         # 模型编译
         model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['acc'])
         # 训练
@@ -203,25 +144,23 @@ class Stacking(object):
         """
         训练车型模型并保存
         """
-        model_map = pd.read_csv(path + 'predict/map/model_map.csv')
-        model_map = model_map.loc[(model_map['brand_slug'].notnull()), :]
-        model_map.reset_index(inplace=True, drop=True)
+        brand_map = pd.read_csv(path + 'predict/map/brand_map.csv')
         exception_model_predict = []
 
-        # for i, brand_slug in enumerate(list(set(model_map.brand_slug.values))):
+        # for i, brand_slug in enumerate(list(set(brand_map.brand_slug.values))):
         for i, brand_slug in enumerate(['dazhong']):
             print(i, 'start model train:', brand_slug)
             # 定位品牌
             train = self.train.loc[(self.train['brand_slug'] == brand_slug), :]
             train.reset_index(inplace=True, drop=True)
             # 生成车型映射表
-            car_model = pd.DataFrame(pd.Series(list(set(train.global_slug.values))), columns=['global_slug'])
+            car_model = pd.DataFrame(pd.Series(list(set(train.model_slug.values))), columns=['model_slug'])
             car_model = car_model.reset_index(drop=True).reset_index()
             car_model = car_model.rename(columns={'index': 'model_id'})
             os.makedirs(os.path.dirname(path + 'predict/model/brand/' + brand_slug + '/model_map.csv'), exist_ok=True)
             car_model.to_csv(path + 'predict/model/brand/' + brand_slug + '/model_map.csv', index=False)
-            car_model = car_model.loc[:, ['global_slug', 'model_id']]
-            train = train.merge(car_model, how='left', on=['global_slug'])
+            car_model = car_model.loc[:, ['model_slug', 'model_id']]
+            train = train.merge(car_model, how='left', on=['model_slug'])
             if len(car_model) == 1:
                 print('finish brand train:', brand_slug)
                 continue
@@ -258,25 +197,23 @@ class Stacking(object):
         """
         训练款型模型并保存
         """
-        detail_map = pd.read_csv(path + 'predict/map/detail_map.csv')
-        detail_map = detail_map.loc[(detail_map['brand_slug'].notnull()), :]
-        detail_map.reset_index(inplace=True, drop=True)
+        brand_map = pd.read_csv(path + 'predict/map/brand_map.csv')
         exception_model_predict = []
 
-        # for i, brand_slug in enumerate(list(set(detail_map.brand_slug.values))):
+        # for i, brand_slug in enumerate(list(set(brand_map.brand_slug.values))):
         for i, brand_slug in enumerate(['dazhong']):
             print(i, 'start model train:', brand_slug)
             # 定位品牌
             train = self.train.loc[(self.train['brand_slug'] == brand_slug), :]
             train.reset_index(inplace=True, drop=True)
             # 生成车型映射表
-            car_details = pd.DataFrame(pd.Series(list(set(train.model_detail_slug.values))), columns=['model_detail_slug'])
+            car_details = pd.DataFrame(pd.Series(list(set(train.detail_slug.values))), columns=['detail_slug'])
             car_details = car_details.reset_index(drop=True).reset_index()
             car_details = car_details.rename(columns={'index': 'detail_id'})
             os.makedirs(os.path.dirname(path + 'predict/model/brand/' + brand_slug + '/detail_map.csv'), exist_ok=True)
             car_details.to_csv(path + 'predict/model/brand/' + brand_slug + '/detail_map.csv', index=False)
-            car_details = car_details.loc[:, ['model_detail_slug', 'detail_id']]
-            train = train.merge(car_details, how='left', on=['model_detail_slug'])
+            car_details = car_details.loc[:, ['detail_slug', 'detail_id']]
+            train = train.merge(car_details, how='left', on=['detail_slug'])
             if len(car_details) == 1:
                 print('finish model train:', brand_slug)
                 continue
@@ -315,11 +252,8 @@ class Stacking(object):
         """
         try:
             self.init_variable()
-            self.define_predict_map()
-            self.combine_train_label(self.train, 'brand_id')
-            self.create_tokenizer()
             # 训练品牌预测模型
-            # self.train_brand_model()
+            self.train_brand_model()
             # # 训练车型预测模型
             self.train_model_model()
             # # 训练款型预测模型

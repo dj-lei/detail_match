@@ -16,12 +16,12 @@ class Process(object):
         print('start project!')
         # 存储训练相关表
         # process_tables.store_train_relative_data()
-        # # 特征工程
-        # fe = FeatureEngineering()
-        # fe.execute()
+        # 特征工程
+        fe = FeatureEngineering()
+        fe.execute()
         # # 训练模型
-        stack = Stacking()
-        stack.execute()
+        # stack = Stacking()
+        # stack.execute()
         time2 = time.time()
         print('cost time', time2-time1)
 
