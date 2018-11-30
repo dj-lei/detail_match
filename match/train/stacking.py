@@ -124,7 +124,7 @@ class Stacking(object):
 
         self.combine_train_label(train, 'brand_id')
         self.create_x_y_data(self.train_final, self.labels_final)
-        brand_map = pd.read_csv(path + 'predict/map/brand_map.csv')
+        brand_map = pd.read_csv(path + 'predict/model/brand_map.csv')
         model = self.define_brand_model_structure(als.MAX_NB_WORDS, als.EMBEDDING_DIM, als.MAX_SEQUENCE_LENGTH, als.NUM_LSTM,
                                                   als.RATE_DROP_LSTM, als.RATE_DROP_DENSE, als.NUM_DENSE, als.ACT, len(brand_map))
         # 设置随机种子
@@ -144,11 +144,11 @@ class Stacking(object):
         """
         训练车型模型并保存
         """
-        brand_map = pd.read_csv(path + 'predict/map/brand_map.csv')
+        brand_map = pd.read_csv(path + 'predict/model/brand_map.csv')
         exception_model_predict = []
 
         # for i, brand_slug in enumerate(list(set(brand_map.brand_slug.values))):
-        for i, brand_slug in enumerate(['dazhong']):
+        for i, brand_slug in enumerate([1]):
             print(i, 'start model train:', brand_slug)
             # 定位品牌
             train = self.train.loc[(self.train['brand_slug'] == brand_slug), :]
@@ -157,8 +157,8 @@ class Stacking(object):
             car_model = pd.DataFrame(pd.Series(list(set(train.model_slug.values))), columns=['model_slug'])
             car_model = car_model.reset_index(drop=True).reset_index()
             car_model = car_model.rename(columns={'index': 'model_id'})
-            os.makedirs(os.path.dirname(path + 'predict/model/brand/' + brand_slug + '/model_map.csv'), exist_ok=True)
-            car_model.to_csv(path + 'predict/model/brand/' + brand_slug + '/model_map.csv', index=False)
+            os.makedirs(os.path.dirname(path + 'predict/model/brand/' + str(brand_slug) + '/model_map.csv'), exist_ok=True)
+            car_model.to_csv(path + 'predict/model/brand/' + str(brand_slug) + '/model_map.csv', index=False)
             car_model = car_model.loc[:, ['model_slug', 'model_id']]
             train = train.merge(car_model, how='left', on=['model_slug'])
             if len(car_model) == 1:
@@ -171,13 +171,13 @@ class Stacking(object):
             model = self.define_brand_model_structure(als.MAX_NB_WORDS, als.EMBEDDING_DIM, als.MAX_SEQUENCE_LENGTH,
                                                       als.NUM_LSTM,
                                                       als.RATE_DROP_LSTM, als.RATE_DROP_DENSE, als.NUM_DENSE, als.ACT,
-                                                      len(list(set(train.global_slug.values))))
+                                                      len(list(set(car_model.model_slug.values))))
             # 设置随机种子
             np.random.seed(als.SEED)
             # 早期停止回调
             early_stopping = EarlyStopping(monitor='val_loss', patience=5, verbose=als.VERBOSE, mode='min')
             # 只保存最佳权重
-            mcp_save = ModelCheckpoint(path + 'predict/model/brand/' + brand_slug + '/model_model_weights.hdf5', save_best_only=True, monitor='val_loss', mode='min')
+            mcp_save = ModelCheckpoint(path + 'predict/model/brand/' + str(brand_slug) + '/model_model_weights.hdf5', save_best_only=True, monitor='val_loss', mode='min')
             # 模型编译
             model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['acc'])
             # 训练
@@ -197,11 +197,11 @@ class Stacking(object):
         """
         训练款型模型并保存
         """
-        brand_map = pd.read_csv(path + 'predict/map/brand_map.csv')
+        brand_map = pd.read_csv(path + 'predict/model/brand_map.csv')
         exception_model_predict = []
 
         # for i, brand_slug in enumerate(list(set(brand_map.brand_slug.values))):
-        for i, brand_slug in enumerate(['dazhong']):
+        for i, brand_slug in enumerate([1]):
             print(i, 'start model train:', brand_slug)
             # 定位品牌
             train = self.train.loc[(self.train['brand_slug'] == brand_slug), :]
@@ -210,8 +210,8 @@ class Stacking(object):
             car_details = pd.DataFrame(pd.Series(list(set(train.detail_slug.values))), columns=['detail_slug'])
             car_details = car_details.reset_index(drop=True).reset_index()
             car_details = car_details.rename(columns={'index': 'detail_id'})
-            os.makedirs(os.path.dirname(path + 'predict/model/brand/' + brand_slug + '/detail_map.csv'), exist_ok=True)
-            car_details.to_csv(path + 'predict/model/brand/' + brand_slug + '/detail_map.csv', index=False)
+            os.makedirs(os.path.dirname(path + 'predict/model/brand/' + str(brand_slug) + '/detail_map.csv'), exist_ok=True)
+            car_details.to_csv(path + 'predict/model/brand/' + str(brand_slug) + '/detail_map.csv', index=False)
             car_details = car_details.loc[:, ['detail_slug', 'detail_id']]
             train = train.merge(car_details, how='left', on=['detail_slug'])
             if len(car_details) == 1:
@@ -224,13 +224,13 @@ class Stacking(object):
             model = self.define_brand_model_structure(als.MAX_NB_WORDS, als.EMBEDDING_DIM, als.MAX_SEQUENCE_LENGTH,
                                                       als.NUM_LSTM,
                                                       als.RATE_DROP_LSTM, als.RATE_DROP_DENSE, als.NUM_DENSE, als.ACT,
-                                                      len(list(set(train.model_detail_slug.values))))
+                                                      len(list(set(car_details.detail_slug.values))))
             # 设置随机种子
             np.random.seed(als.SEED)
             # 早期停止回调
             early_stopping = EarlyStopping(monitor='val_loss', patience=5, verbose=als.VERBOSE, mode='min')
             # 只保存最佳权重
-            mcp_save = ModelCheckpoint(path + 'predict/model/brand/' + brand_slug + '/detail_model_weights.hdf5', save_best_only=True, monitor='val_loss', mode='min')
+            mcp_save = ModelCheckpoint(path + 'predict/model/brand/' + str(brand_slug) + '/detail_model_weights.hdf5', save_best_only=True, monitor='val_loss', mode='min')
             # 模型编译
             model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['acc'])
             # 训练
@@ -253,9 +253,9 @@ class Stacking(object):
         try:
             self.init_variable()
             # 训练品牌预测模型
-            self.train_brand_model()
+            # self.train_brand_model()
             # # 训练车型预测模型
-            self.train_model_model()
+            # self.train_model_model()
             # # 训练款型预测模型
             self.train_details_model()
         except Exception:

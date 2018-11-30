@@ -59,7 +59,7 @@ class Predict(object):
         加载各类匹配表和模型
         """
         self.test = pd.DataFrame()
-        self.brand_map = pd.read_csv(path + 'predict/map/brand_map.csv')
+        self.brand_map = pd.read_csv(path + 'predict/model/brand_map.csv')
         self.exception_model = pd.read_csv(path + 'predict/model/brand/exception_model_predict.csv')
         self.exception_detail = pd.read_csv(path + 'predict/model/brand/exception_detail_predict.csv')
 
@@ -135,10 +135,10 @@ class Predict(object):
         for brand_slug in brand_slugs:
             brand_data = self.test.loc[(self.test['predict_brand_slug'] == brand_slug), :]
             brand_data.reset_index(inplace=True, drop=True)
-            model_map = pd.read_csv(path + 'predict/model/brand/' + brand_slug + '/model_map.csv')
+            model_map = pd.read_csv(path + 'predict/model/brand/' + str(brand_slug) + '/model_map.csv')
             # 如果只有一个车型直接赋值
             if len(model_map) == 1:
-                brand_data['predict_model_slug'] = list(model_map.global_slug.values)[0]
+                brand_data['predict_model_slug'] = list(model_map.model_slug.values)[0]
                 result = result.append(brand_data, ignore_index=True)
                 continue
             # 预测
@@ -148,7 +148,7 @@ class Predict(object):
                                                        als.NUM_LSTM,
                                                        als.RATE_DROP_LSTM, als.RATE_DROP_DENSE, als.NUM_DENSE, als.ACT,
                                                        len(model_map))
-            model.load_weights(path + 'predict/model/brand/' + brand_slug + '/model_model_weights.hdf5')
+            model.load_weights(path + 'predict/model/brand/' + str(brand_slug) + '/model_model_weights.hdf5')
             preds = model.predict(pred, batch_size=1024, verbose=als.VERBOSE)
 
             # 根据预测阈值区分可预测和不可预测
@@ -160,7 +160,7 @@ class Predict(object):
                     final.append(list(preds[i]).index(max(list(preds[i]))))
             final = pd.DataFrame(pd.Series(final), columns=['model_id'])
             final = final.merge(model_map, how='left', on=['model_id'])
-            final = final.rename(columns={'global_slug': 'predict_model_slug'})
+            final = final.rename(columns={'model_slug': 'predict_model_slug'})
             brand_data['predict_model_slug'] = final['predict_model_slug']
             result = result.append(brand_data, ignore_index=True)
         result = result.loc[:, ['id', 'predict_model_slug']]
@@ -180,10 +180,10 @@ class Predict(object):
         for brand_slug in brand_slugs:
             brand_data = self.test.loc[(self.test['predict_brand_slug'] == brand_slug), :]
             brand_data.reset_index(inplace=True, drop=True)
-            detail_map = pd.read_csv(path + 'predict/model/brand/' + brand_slug + '/detail_map.csv')
+            detail_map = pd.read_csv(path + 'predict/model/brand/' + str(brand_slug) + '/detail_map.csv')
             # 如果只有一个车型直接赋值
             if len(detail_map) == 1:
-                brand_data['predict_model_detail_slug'] = list(detail_map.model_detail_slug.values)[0]
+                brand_data['predict_model_detail_slug'] = list(detail_map.detail_slug.values)[0]
                 result = result.append(brand_data, ignore_index=True)
                 continue
             # 预测
@@ -193,7 +193,7 @@ class Predict(object):
                                                        als.NUM_LSTM,
                                                        als.RATE_DROP_LSTM, als.RATE_DROP_DENSE, als.NUM_DENSE, als.ACT,
                                                        len(detail_map))
-            model.load_weights(path + 'predict/model/brand/' + brand_slug + '/detail_model_weights.hdf5')
+            model.load_weights(path + 'predict/model/brand/' + str(brand_slug) + '/detail_model_weights.hdf5')
             preds = model.predict(pred, batch_size=1024, verbose=als.VERBOSE)
 
             # 根据预测阈值区分可预测和不可预测
@@ -205,11 +205,10 @@ class Predict(object):
                     final.append(list(preds[i]).index(max(list(preds[i]))))
             final = pd.DataFrame(pd.Series(final), columns=['detail_id'])
             final = final.merge(detail_map, how='left', on=['detail_id'])
-            final = final.rename(columns={'model_detail_slug': 'predict_model_detail_slug'})
-            brand_data['predict_model_detail_slug'] = final['predict_model_detail_slug']
+            final = final.rename(columns={'detail_slug': 'predict_detail_slug'})
+            brand_data['predict_detail_slug'] = final['predict_detail_slug']
             result = result.append(brand_data, ignore_index=True)
-        # self.test = self.test.drop(['model_detail_slug'], axis=1)
-        result = result.loc[:, ['id', 'predict_model_detail_slug']]
+        result = result.loc[:, ['id', 'predict_detail_slug']]
         self.test = self.test.merge(result, how='left', on=['id'])
         self.test.reset_index(inplace=True, drop=True)
 
@@ -221,7 +220,7 @@ class Predict(object):
             # 基本清洗
             self.base_clean()
             # 预测品牌
-            self.predict_brand()
+            # self.predict_brand()
             # 预测车型
             self.predict_model()
             # 预测款型

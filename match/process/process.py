@@ -17,11 +17,11 @@ class Process(object):
         # 存储训练相关表
         # process_tables.store_train_relative_data()
         # 特征工程
-        fe = FeatureEngineering()
-        fe.execute()
+        # fe = FeatureEngineering()
+        # fe.execute()
         # # 训练模型
-        # stack = Stacking()
-        # stack.execute()
+        stack = Stacking()
+        stack.execute()
         time2 = time.time()
         print('cost time', time2-time1)
 
@@ -53,7 +53,7 @@ class Process(object):
             # process_tables.store_predict_data(start_time_node, end_time_node)
             # 预测品牌
             predict = Predict()
-            predict.execute_cron()
+            predict.execute()
         except Exception as e:
             print(traceback.format_exc())
             # db_operate.insert_valuate_error_info(e)
