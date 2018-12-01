@@ -19,7 +19,7 @@ class Process(object):
         # 特征工程
         # fe = FeatureEngineering()
         # fe.execute()
-        # # 训练模型
+        # 训练模型
         stack = Stacking()
         stack.execute()
         time2 = time.time()

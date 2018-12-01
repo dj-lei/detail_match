@@ -42,16 +42,6 @@ def delete_str_useless(df, column_name):
     return text
 
 
-def fill_column(df):
-    """
-    装填字段
-    """
-    if df['key'] == 1:
-        return pd.Series([df['predict_brand_slug'], df['predict_model_slug'], df['predict_model_detail_slug'], 'P'])
-    else:
-        return pd.Series([df['brand_slug'], df['model_slug'], df['model_detail_slug'], 'S'])
-
-
 class Predict(object):
 
     def __init__(self):

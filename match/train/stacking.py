@@ -46,6 +46,13 @@ class Stacking(object):
             data = data.append(temp)
         data.reset_index(inplace=True, drop=True)
 
+        if len(data) < 10000:
+            num = int(10000 / len(data))
+            temp = data.copy()
+            for i in range(0, num):
+                data = data.append(temp)
+            data.reset_index(inplace=True, drop=True)
+
         for i in range(0, len(data)):
             temp = []
             x = data['final_text'][i]
@@ -117,6 +124,7 @@ class Stacking(object):
         car_brand = pd.DataFrame(pd.Series(list(set(train.brand_slug.values))), columns=['brand_slug'])
         car_brand = car_brand.reset_index(drop=True).reset_index()
         car_brand = car_brand.rename(columns={'index': 'brand_id'})
+        car_brand['brand_slug'] = car_brand['brand_slug'].astype(int)
         os.makedirs(os.path.dirname(path + 'predict/model/brand_map.csv'), exist_ok=True)
         car_brand.to_csv(path + 'predict/model/brand_map.csv', index=False)
         car_brand = car_brand.loc[:, ['brand_slug', 'brand_id']]
@@ -147,8 +155,8 @@ class Stacking(object):
         brand_map = pd.read_csv(path + 'predict/model/brand_map.csv')
         exception_model_predict = []
 
-        # for i, brand_slug in enumerate(list(set(brand_map.brand_slug.values))):
-        for i, brand_slug in enumerate([1]):
+        for i, brand_slug in enumerate(list(set(brand_map.brand_slug.values))):
+        # for i, brand_slug in enumerate([133]):
             print(i, 'start model train:', brand_slug)
             # 定位品牌
             train = self.train.loc[(self.train['brand_slug'] == brand_slug), :]
@@ -200,8 +208,8 @@ class Stacking(object):
         brand_map = pd.read_csv(path + 'predict/model/brand_map.csv')
         exception_model_predict = []
 
-        # for i, brand_slug in enumerate(list(set(brand_map.brand_slug.values))):
-        for i, brand_slug in enumerate([1]):
+        for i, brand_slug in enumerate(list(set(brand_map.brand_slug.values))):
+        # for i, brand_slug in enumerate([133]):
             print(i, 'start model train:', brand_slug)
             # 定位品牌
             train = self.train.loc[(self.train['brand_slug'] == brand_slug), :]
@@ -253,10 +261,10 @@ class Stacking(object):
         try:
             self.init_variable()
             # 训练品牌预测模型
-            # self.train_brand_model()
-            # # 训练车型预测模型
-            # self.train_model_model()
-            # # 训练款型预测模型
+            self.train_brand_model()
+            # 训练车型预测模型
+            self.train_model_model()
+            # 训练款型预测模型
             self.train_details_model()
         except Exception:
             raise StackingTrainError(traceback.format_exc())
