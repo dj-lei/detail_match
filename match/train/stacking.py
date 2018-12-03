@@ -262,10 +262,10 @@ class Stacking(object):
         """
         try:
             self.init_variable()
-            # # 训练品牌预测模型
-            # self.train_brand_model()
-            # # 训练车型预测模型
-            # self.train_model_model()
+            # 训练品牌预测模型
+            self.train_brand_model()
+            # 训练车型预测模型
+            self.train_model_model()
             # 训练款型预测模型
             self.train_details_model()
         except Exception:

@@ -210,7 +210,7 @@ class Predict(object):
             # 基本清洗
             self.base_clean()
             # 预测品牌
-            # self.predict_brand()
+            self.predict_brand()
             # 预测车型
             self.predict_model()
             # 预测款型
