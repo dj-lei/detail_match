@@ -50,8 +50,8 @@ class Predict(object):
         """
         self.test = pd.DataFrame()
         self.brand_map = pd.read_csv(path + 'predict/model/brand_map.csv')
-        self.exception_model = pd.read_csv(path + 'predict/model/brand/exception_model_predict.csv')
-        self.exception_detail = pd.read_csv(path + 'predict/model/brand/exception_detail_predict.csv')
+        # self.exception_model = pd.read_csv(path + 'predict/model/brand/exception_model_predict.csv')
+        # self.exception_detail = pd.read_csv(path + 'predict/model/brand/exception_detail_predict.csv')
 
     def base_clean(self):
         """
