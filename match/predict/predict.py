@@ -58,7 +58,7 @@ class Predict(object):
         基本清洗
         """
         # 加载原始训练数据
-        self.test = pd.read_csv(path + '../tmp/train/predict.csv')
+        self.test = pd.read_csv(path + '../tmp/train/wait_predict.csv')
         # self.test = self.test.loc[(~self.test['brand_slug'].isin(list(self.exception_model.exception_brand.values))), :]
         # self.test = self.test.loc[(~self.test['brand_slug'].isin(list(self.exception_detail.exception_brand.values))), :]
         # self.test.reset_index(inplace=True, drop=True)
@@ -216,7 +216,6 @@ class Predict(object):
             # 预测款型
             self.predict_detail()
 
-            # self.test = self.test.drop(['id', 'price_bn', 'year', 'volume', 'control', 'detail_model','brand_slug'], axis=1)
             self.test.to_csv(path + '../tmp/train/car_detail_info.csv', index=False)
 
         except Exception:
