@@ -24,6 +24,7 @@ def delete_str_useless(df, column_name):
     # text = text.replace('!', '')
     # text = text.replace('。', '')
     # text = text.replace('＞', '')
+    text = text.replace('·', '')
     text = text.replace('・', '')
     # text = text.replace('》', '')
     # text = text.replace('！', '')
@@ -83,6 +84,15 @@ def replace_brand_contain_model(df):
     return text + ' ' + df['detail_name']
 
 
+def process_benz(df):
+    text = re.sub("\(进口\)", '', df['model_name'])
+    regex = re.compile("级")
+    result = regex.findall(text)
+    if len(result) < 1:
+        return text + '级'
+    return text
+
+
 class FeatureEngineering(object):
 
     def __init__(self):
@@ -110,6 +120,11 @@ class FeatureEngineering(object):
         try:
             self.car_autohome_all['online_year'] = self.car_autohome_all.apply(cal_online_year, axis=1)
             self.car_autohome_all['final_text'] = self.car_autohome_all.apply(final_process, axis=1)
+
+            # 特殊描述补充
+            temp = self.car_autohome_all.loc[(self.car_autohome_all['brand_name'] == '奔驰'), :].reset_index(drop=True)
+            temp['model_name'] = temp.apply(process_benz, axis=1)
+            self.car_autohome_all = self.car_autohome_all.append(temp, sort=False)
 
             supplement_part3 = self.car_autohome_all.copy()
             # 品牌包含在车系名称
