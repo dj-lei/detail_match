@@ -154,7 +154,8 @@ class FeatureEngineering(object):
 
             self.car_autohome_all['final_text'] = self.car_autohome_all.apply(delete_str_useless, args=('final_text',), axis=1)
             self.car_autohome_all = self.car_autohome_all.drop_duplicates(['final_text'])
-            self.car_autohome_all = self.car_autohome_all.loc[:, ['brand_slug', 'brand_name', 'model_slug', 'model_name', 'detail_slug', 'detail_name', 'online_year', 'final_text']]
+            self.car_autohome_all = self.car_autohome_all.loc[:, ['brand_slug', 'brand_name', 'model_slug', 'model_name', 'detail_slug', 'detail_name', 'online_year', 'price_bn', 'final_text']]
+            self.car_autohome_all = self.car_autohome_all.loc[(self.car_autohome_all['price_bn'].notnull()), :]
             # 存储中间文件
             self.car_autohome_all.to_csv(path + '../tmp/train/train_final.csv', index=False)
 
