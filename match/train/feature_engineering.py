@@ -51,15 +51,6 @@ def final_process(df):
     return text
 
 
-def cal_online_year(df):
-    """
-    查找年款
-    """
-    regex = re.compile("(\d+)款")
-    result = regex.findall(df['detail_name'])
-    return result[0]
-
-
 def replace_jinkou_position(df):
     """
     替换进口位置
@@ -118,7 +109,7 @@ class FeatureEngineering(object):
         数据常规预处理
         """
         try:
-            self.car_autohome_all['online_year'] = self.car_autohome_all.apply(cal_online_year, axis=1)
+            car_autohome_all = self.car_autohome_all.copy()
             self.car_autohome_all['final_text'] = self.car_autohome_all.apply(final_process, axis=1)
 
             # 特殊描述补充
@@ -154,8 +145,9 @@ class FeatureEngineering(object):
 
             self.car_autohome_all['final_text'] = self.car_autohome_all.apply(delete_str_useless, args=('final_text',), axis=1)
             self.car_autohome_all = self.car_autohome_all.drop_duplicates(['final_text'])
-            self.car_autohome_all = self.car_autohome_all.loc[:, ['brand_slug', 'brand_name', 'model_slug', 'model_name', 'detail_slug', 'detail_name', 'online_year', 'price_bn', 'final_text']]
+            self.car_autohome_all = self.car_autohome_all.loc[:, ['brand_slug', 'model_slug', 'detail_slug', 'online_year', 'price_bn', 'final_text']]
             self.car_autohome_all = self.car_autohome_all.loc[(self.car_autohome_all['price_bn'].notnull()), :]
+            self.car_autohome_all = self.car_autohome_all.merge(car_autohome_all.loc[:, ['detail_slug', 'brand_name', 'model_name', 'detail_name']], how='left', on=['detail_slug'])
             # 存储中间文件
             self.car_autohome_all.to_csv(path + '../tmp/train/train_final.csv', index=False)
 
