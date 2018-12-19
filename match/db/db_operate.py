@@ -5,7 +5,7 @@ def query_produce_open_model_detail():
     """
     查询款型库
     """
-    query_sql = 'select id,price_bn,global_slug,year,volume,control,detail_model,detail_model_slug from open_model_detail where status = \'Y\' or status = \'A\' '
+    query_sql = 'select * from open_model_detail'
 
     engine = create_engine(gl.PRODUCE_PINGJIA_ENGINE, encoding=gl.ENCODING)
     return pd.read_sql_query(query_sql, engine)
@@ -15,7 +15,7 @@ def query_produce_open_category():
     """
     查询车型库
     """
-    query_sql = 'select id,name,slug,parent,attribute from open_category where status = \'Y\' or status = \'A\''
+    query_sql = 'select * from open_category '
 
     engine = create_engine(gl.PRODUCE_PINGJIA_ENGINE, encoding=gl.ENCODING)
     return pd.read_sql_query(query_sql, engine)
