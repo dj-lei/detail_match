@@ -7,7 +7,7 @@ class Process(object):
         self.data = []
         self.result = []
 
-    def train_all_details(self):
+    def train(self):
         """
         处理所有车型
         """
@@ -25,23 +25,7 @@ class Process(object):
         time2 = time.time()
         print('cost time', time2-time1)
 
-        # except Exception as e:
-        #     db_operate.insert_valuate_error_info(e)
-
-    def predict_all_car_source(self):
-        """
-        预测所有款型匹配
-        """
-        try:
-            # 查询car_source需要预测记录
-            process_tables.store_all_need_predict_data()
-            # 预测品牌
-            predict = Predict()
-            predict.execute()
-        except Exception as e:
-            print(traceback.format_exc())
-
-    def cron_predict(self):
+    def predict(self):
         """
         定时预测款型匹配
         """

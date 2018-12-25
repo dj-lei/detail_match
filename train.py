@@ -4,13 +4,13 @@ sys.path.append('../')
 from match import *
 
 
-def train_all_details():
+def train():
     """
     训练所有款型的预测
     """
     process = Process()
-    process.train_all_details()
+    process.train()
 
 
 if __name__ == "__main__":
-    train_all_details()
+    train()
