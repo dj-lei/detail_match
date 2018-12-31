@@ -48,9 +48,9 @@ from match.exception.error import PredictError
 
 from match.db import db_operate
 from match.db import process_tables
-from match.train.feature_engineering import FeatureEngineering
-from match.train.stacking import Stacking
-from match.predict.predict import Predict
+from match.train.feature_engineering_liyang import FeatureEngineering
+# from match.train.stacking import Stacking
+from match.predict.predict_liyang import Predict
 
 from match.process.process import Process
 
