@@ -97,10 +97,10 @@ class FeatureEngineering(object):
         try:
             # 基本清洗
             self.base_clean()
-            # # 生成语料库
-            # self.create_word2vec()
-            # # 创建语料库映射器
-            # self.create_tokenizer()
+            # 生成语料库
+            self.create_word2vec()
+            # 创建语料库映射器
+            self.create_tokenizer()
         except Exception:
             raise FeatureEngineeringError(traceback.format_exc())
 
