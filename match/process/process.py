@@ -19,8 +19,8 @@ class Process(object):
         # 特征工程
         fe = FeatureEngineering()
         fe.execute()
-        predict = Predict()
-        predict.execute()
+        # predict = Predict()
+        # predict.execute()
         # 训练模型
         # stack = Stacking()
         # stack.execute()
