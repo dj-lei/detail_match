@@ -13,6 +13,7 @@ if RUNTIME_ENVIRONMENT == 'LOCAL':
     PRODUCE_DB_USER = 'leidengjun'
     PRODUCE_DB_PASSWD = 'ldj_DEV_~!'
     PRODUCE_PINGJIA_ENGINE = 'mysql+pymysql://' + PRODUCE_DB_USER + ':' + PRODUCE_DB_PASSWD + '@' + PRODUCE_DB_ADDR_OUTTER + '/pingjia?charset=utf8'
+    PRODUCE_CHINA_USED_CAR_ESTIMATE_ENGINE = 'mysql+pymysql://' + PRODUCE_DB_USER + ':' + PRODUCE_DB_PASSWD + '@' + PRODUCE_DB_ADDR_OUTTER + '/china_used_car_estimate?charset=utf8'
 
     # 测试库
     TEST_DB_ADDR = '101.200.229.249'

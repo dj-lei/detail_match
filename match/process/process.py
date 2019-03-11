@@ -15,10 +15,10 @@ class Process(object):
         time1 = time.time()
         print('start project!')
         # 存储训练相关表
-        # process_tables.store_train_relative_data()
+        process_tables.store_train_relative_data()
         # 特征工程
-        fe = FeatureEngineering()
-        fe.execute()
+        # fe = FeatureEngineering()
+        # fe.execute()
         # predict = Predict()
         # predict.execute()
         # 训练模型
