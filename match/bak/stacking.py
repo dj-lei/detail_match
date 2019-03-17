@@ -1,4 +1,4 @@
-from match.train import *
+from match.bak import *
 
 
 def cal_train_param(data):
