@@ -39,3 +39,5 @@ elif RUNTIME_ENVIRONMENT == 'PRODUCT':
 ###########################
 ERROR_SQL = 'SQL'
 ERROR_PARAMS = 'PARAMS'
+
+ENGLISH_BRAND = ['mg', 'smart', 'mini', 'localmotors', 'acschnitzer', 'polestar', 'lorinser', 'alpina', 'jeep', 'lite', 'wey', 'ktm', 'gmc', 'ds']

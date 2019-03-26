@@ -20,7 +20,7 @@ def delete_str_useless(df, column_name):
     text = text.replace(')', '')
     text = text.replace('_', '')
     text = text.replace('-', '')
-    text = text.replace('+', '')
+    # text = text.replace('+', '')
     text = text.replace('—', '')
     text = text.replace('/', '')
     text = text.replace('“', '')
@@ -48,10 +48,11 @@ def delete_str_useless(df, column_name):
 
 def find_brand(df, brand):
     for i in range(0, len(brand)):
-        if brand.loc[i, 'brand_name'] in ['mg', 'smart', 'mini']:
-            match = re.findall('^mg|^smart|^mini', df['detail_name'])
+        if brand.loc[i, 'brand_name'] in gl.ENGLISH_BRAND:
+            rule = '^' + brand.loc[i, 'brand_name']
+            match = re.findall(rule, df['detail_name'])
             if len(match) > 0:
-                return pd.Series([brand.loc[(brand['brand_name'] == match[0]),'brand_name'].values, brand.loc[(brand['brand_name'] == match[0]),'brand_slug'].values])
+                return pd.Series([brand.loc[(brand['brand_name'] == match[0]),'brand_name'].values[0], brand.loc[(brand['brand_name'] == match[0]),'brand_slug'].values[0]])
         else:
             match = re.findall(brand.loc[i,'brand_name'],df['detail_name'])
             if len(match) > 0:
@@ -94,21 +95,22 @@ def cal_cos_similar(df, y_vector):
 
 def match_detail(df, car_autohome_all, columns):
     # print(df['brand_slug'], df['online_year'], df['control'], df['volume'])
+    brand_slug = eval(df['brand_slug'])
     if (type(df['control']) != str) & math.isnan(float(df['volume'])):
-        temp_detail = car_autohome_all.loc[(car_autohome_all['brand_slug'] == int(df['brand_slug'])) & (
+        temp_detail = car_autohome_all.loc[(car_autohome_all['brand_slug'].isin(brand_slug)) & (
                     car_autohome_all['online_year'] == int(df['online_year'])), :].reset_index(drop=True)
     elif (type(df['control']) != str) & (not math.isnan(float(df['volume']))):
-        temp_detail = car_autohome_all.loc[(car_autohome_all['brand_slug'] == int(df['brand_slug'])) & (
+        temp_detail = car_autohome_all.loc[(car_autohome_all['brand_slug'].isin(brand_slug)) & (
                     car_autohome_all['online_year'] == int(df['online_year'])) & (
                                                        car_autohome_all['volume'] == float(df['volume'])),
                       :].reset_index(drop=True)
     elif (type(df['control']) == str) & (math.isnan(float(df['volume']))):
-        temp_detail = car_autohome_all.loc[(car_autohome_all['brand_slug'] == int(df['brand_slug'])) & (
+        temp_detail = car_autohome_all.loc[(car_autohome_all['brand_slug'].isin(brand_slug)) & (
                     car_autohome_all['online_year'] == int(df['online_year'])) & (
                                                        car_autohome_all['control'] == df['control']), :].reset_index(
             drop=True)
     else:
-        temp_detail = car_autohome_all.loc[(car_autohome_all['brand_slug'] == int(df['brand_slug'])) & (
+        temp_detail = car_autohome_all.loc[(car_autohome_all['brand_slug'].isin(brand_slug)) & (
                     car_autohome_all['online_year'] == int(df['online_year'])) & (
                                                        car_autohome_all['control'] == df['control']) & (
                                                        car_autohome_all['volume'] == float(df['volume'])),
@@ -118,7 +120,7 @@ def match_detail(df, car_autohome_all, columns):
         print('no', df['brand_name'], df['brand_slug'], df['online_year'], df['control'], df['volume'])
         raise ApiParamsError('款型描述需包含品牌+车系+年款和必要描述(尽量包含变速器和排量)!例如:吉利 远景suv 2016款 1.3t 无级 旗舰')
     temp_detail['cos_similar'] = temp_detail.apply(cal_cos_similar, args=(df['fill_vector'],), axis=1)
-    temp_detail = temp_detail.loc[temp_detail.groupby(['brand_slug']).cos_similar.idxmax(), :]
+    temp_detail = temp_detail.loc[temp_detail['cos_similar'] == max(list(set(temp_detail.cos_similar.values))), :]
     result = temp_detail.loc[temp_detail.groupby(['brand_slug']).cos_similar.idxmax(), columns].values[0]
     return pd.Series(result)
 

@@ -20,9 +20,11 @@ class Process(object):
         匹配车源数据
         """
         # 查询车源数据
-        # process_tables.query_car_source()
+        process_tables.query_car_source()
 
         # 匹配
+        time1 = time.time()
+        print('start project!')
         result = pd.DataFrame()
         car_source = pd.read_csv(path + '../tmp/train/wait_match.csv')
         detail_name = car_source.loc[:, ['detail_name']].sort_values(by=['detail_name'])
@@ -34,7 +36,7 @@ class Process(object):
 
             part1 = car_source.loc[(car_source['detail_name'] == detail), :].reset_index(drop=True)
             print(i, detail_name['detail_name'][i], len(part1))
-            gpj_detail = match.predict(part1['detail_name'][0])['data']
+            gpj_detail = match.predict(part1['detail_name'][0], cos_similar=0.81)['data']
             print(gpj_detail)
             if len(gpj_detail) == 0:
                 part1['origin_name'] = part1['detail_name']
@@ -51,12 +53,20 @@ class Process(object):
         result = result.loc[:, ['origin_name', 'brand_name', 'model_name', 'detail_name', 'cos_similar', 'brand_slug', 'model_slug', 'detail_slug', 'online_year',
                                 'energy', 'body', 'control', 'volume', 'year', 'month', 'mile', 'city', 'price_bn', 'price', 'create_time', 'domain', 'labels', 'url']]
         result.to_csv(path + '../tmp/train/train_temp.csv', index=False)
+        time2 = time.time()
+        print('cost time', time2-time1)
 
-    def match_test(self):
+    def match_test(self, detail_name):
         """
         简单测试
         """
         match = Match()
-        gpj_detail = match.predict('雪佛兰 乐驰 2006款 0.8L 手动舒适型', cos_similar=0)
-        print(gpj_detail)
+        gpj_detail = match.predict(detail_name, cos_similar=0)
         return gpj_detail
+
+    def match_old_version(self):
+        """
+        旧版纯字符串匹配
+        """
+        feature = FeatureEngineering()
+        feature.execute()

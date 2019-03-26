@@ -20,7 +20,7 @@ def delete_str_useless(df, column_name):
     text = text.replace(')', '')
     text = text.replace('_', '')
     text = text.replace('-', '')
-    text = text.replace('+', '')
+    # text = text.replace('+', '')
     text = text.replace('—', '')
     text = text.replace('/', '')
     text = text.replace('“', '')
@@ -51,9 +51,19 @@ def cal_brand_count(df):
 
 
 def add_brand(brand):
-    brand = brand.append(pd.DataFrame([['昌河','79'],['吉利','25'],['传祺','82'],['swm斯威','269'],['斯威','269'],['猎豹','78'],
-                                      ['力帆','80'],['五菱','114'],['野马','111'],['mg','20'],['英致','192'],['汉腾','267'],
-                                      ['吉奥','108'],['康迪','219'],['夏利','110'],['莲花','89'],['北汽','154']],columns=['brand_name','brand_slug']),sort=False).reset_index(drop=True)
+    brand = brand.loc[~(brand['brand_name'].isin(['长安', '长安跨越', '长安欧尚', '长安轻型车', '北京', '迈巴赫', '福田', '福田乘用车', '三菱', '东风小康'])), :].reset_index(drop=True)
+    brand = brand.append(pd.DataFrame([['昌河',79],['道达',301],['幻速',203],['绅宝',173],['威旺',143],['吉利',25],['swm斯威',269],['斯威',269],['猎豹',78],
+                                      ['力帆',80],['五菱',114],['野马',111],['mg',20],['英致',192],['汉腾',267],
+                                      ['吉奥',108],['康迪',219],['夏利',110],['莲花',89],['迈巴赫',55],['吉普',46],['东风小康', 142]],columns=['brand_name','brand_slug']),sort=False).reset_index(drop=True)
+    return brand
+
+
+def process_brand_slug(df):
+    return str([df['brand_slug']])
+
+
+def fill_dup_brand_slug(brand):
+    brand = brand.append(pd.DataFrame([['传祺', '[82, 313]'], ['三菱', '[68,329]'], ['福田', '[96,282]'],['长安', '[294,299,163,76]'],['北京', '[27,154]'],['北汽', '[27,154]']],columns=['brand_name','brand_slug']),sort=False).reset_index(drop=True)
     return brand
 
 
@@ -114,8 +124,17 @@ class Generate(object):
         car_autohome_all['brand_name'] = car_autohome_all.apply(delete_str_useless, args=('brand_name',), axis=1)
         car_autohome_all['model_name'] = car_autohome_all.apply(delete_str_useless, args=('model_name',), axis=1)
 
-        car_autohome_all['final_text'] = car_autohome_all['brand_name'] + car_autohome_all['model_name'] + car_autohome_all['detail_name']
-        car_autohome_all['final_text'] = car_autohome_all.apply(delete_str_useless, args=('final_text',), axis=1)
+        # part1
+        part1 = car_autohome_all.copy()
+        part1['final_text'] = part1['brand_name'] + part1['model_name'] + part1['detail_name']
+        part1['final_text'] = part1.apply(delete_str_useless, args=('final_text',), axis=1)
+
+        # part2
+        part2 = car_autohome_all.copy()
+        part2['final_text'] = part2['model_name'] + part2['detail_name']
+        part2['final_text'] = part2.apply(delete_str_useless, args=('final_text',), axis=1)
+
+        car_autohome_all = part1.append(part2, sort=False).reset_index(drop=True)
         car_autohome_all['fill_vector'] = np.NaN
 
         train_final = []
@@ -160,16 +179,18 @@ class Generate(object):
         更新相关表
         """
         car_autohome_cos_vector = pd.read_csv(path + '../tmp/train/car_autohome_cos_vector.csv')
-        # process_tables.insert_or_update_match_cos_vector(car_autohome_cos_vector)
+        process_tables.insert_or_update_match_cos_vector(car_autohome_cos_vector)
 
         brand = car_autohome_cos_vector.loc[:, ['brand_name', 'brand_slug']].drop_duplicates(['brand_name', 'brand_slug']).reset_index(drop=True)
-        brand = add_brand(brand)
         brand['brand_name'] = brand.apply(delete_str_useless, args=('brand_name',), axis=1)
         brand['name_count'] = brand.apply(cal_brand_count, axis=1)
         brand = brand.sort_values(by=['name_count'], ascending=False).reset_index(drop=True)
         brand = brand.loc[:, ['brand_name', 'brand_slug']].drop_duplicates(['brand_name']).reset_index(drop=True)
+        brand = add_brand(brand)
+        brand['brand_slug'] = brand.apply(process_brand_slug, axis=1)
+        brand = fill_dup_brand_slug(brand)
         brand.to_csv(path + '../tmp/train/brand_name.csv', index=False)
-        # process_tables.insert_or_update_match_brand_name(brand)
+        process_tables.insert_or_update_match_brand_name(brand)
 
         f = open(path + '../tmp/train/word_index.txt', 'r', encoding='UTF-8')
         temp = f.read()
@@ -177,10 +198,10 @@ class Generate(object):
         word_index = pd.DataFrame.from_dict(word_index, orient='index').reset_index()
         word_index.columns = ['word', 'num']
         word_index.to_csv(path + '../tmp/train/word_index.csv', index=False)
-        # process_tables.insert_or_update_match_word_index(word_index)
+        process_tables.insert_or_update_match_word_index(word_index)
 
     def execute(self):
-        # self.generate_word_vector_map()
-        # self.generate_standard_cos_vector()
-        # self.match_gpj_detail()
+        self.generate_word_vector_map()
+        self.generate_standard_cos_vector()
+        self.match_gpj_detail()
         self.update_tables()
