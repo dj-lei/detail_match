@@ -23,7 +23,6 @@ class Process(object):
         process_tables.query_car_source()
 
         # 匹配
-        time1 = time.time()
         print('start project!')
         result = pd.DataFrame()
         car_source = pd.read_csv(path + '../tmp/train/wait_match.csv')
@@ -53,8 +52,18 @@ class Process(object):
         result = result.loc[:, ['origin_name', 'brand_name', 'model_name', 'detail_name', 'cos_similar', 'brand_slug', 'model_slug', 'detail_slug', 'online_year',
                                 'energy', 'body', 'control', 'volume', 'year', 'month', 'mile', 'city', 'price_bn', 'price', 'create_time', 'domain', 'labels', 'url']]
         result.to_csv(path + '../tmp/train/train_temp.csv', index=False)
-        time2 = time.time()
-        print('cost time', time2-time1)
+
+        train_temp = pd.read_csv(path + '../tmp/train/train_temp.csv')
+        train = train_temp.loc[(train_temp['brand_name'].notnull()), :]
+        train = train.sort_values(by=['url', 'create_time'], ascending=[True, False]).reset_index(drop=True)
+        train = train.drop_duplicates(['url'])
+        train.to_csv('/home/ml/ProgramProject/evaluation-predict/tmp/train/train.csv', index=False)
+
+        miss_match = train_temp.loc[(train_temp['brand_name'].isnull()), :].reset_index(drop=True)
+        if os.path.exists(path + '../tmp/train/miss_match.csv'):
+            miss_match.to_csv(path + '../tmp/train/miss_match.csv', index=False)
+        else:
+            miss_match.to_csv(path + '../tmp/train/miss_match.csv', index=False, mode='a', header=False)
 
     def match_test(self, detail_name):
         """
