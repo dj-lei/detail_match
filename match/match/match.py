@@ -180,7 +180,7 @@ class Match(object):
                 result['message'] = '匹配相似度低于阈值,已过滤!'
                 return result
 
-            params = params.drop(['fill_vector', 'gpj_brand_slug', 'gpj_model_slug', 'gpj_detail_slug', 'listed_year', 'manufacturer', 'body_style', 'emission_standard', 'popular'], axis=1)
+            params = params.drop(['fill_vector', 'listed_year', 'manufacturer', 'body_style', 'emission_standard', 'popular'], axis=1)
             result['status'] = 'success'
             result['data'] = params.to_dict('records')[0]
             return result

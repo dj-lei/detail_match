@@ -47,7 +47,9 @@ def query_car_source():
     """
     插入或更新
     """
+    start_time = datetime.datetime.now() - datetime.timedelta(days=30)
+    start_time = start_time.strftime("%Y-%m-%d") + ' 00:00:00'
     engine = create_engine(gl.PRODUCE_PINGJIA_ENGINE, encoding=gl.ENCODING)
 
-    query_sql = 'select url,detail_name,year,month,mile,city,price,domain,labels,create_time from crawler_car_source where domain = \'guazi.com\' '
+    query_sql = 'select url,brand_name,model_name,detail_name,year,month,mile,city,price,domain,labels,create_time,deal_date_ts from crawler_car_source where transfer_owner = 0 and domain in (\'guazi.com\',\'ttpai.cn\',\'xin.com\') and create_time >= \'' + start_time + '\''
     return pd.read_sql_query(query_sql, engine)

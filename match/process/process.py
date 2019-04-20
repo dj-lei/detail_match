@@ -1,6 +1,11 @@
 from match.process import *
 
 
+def timestamp_datetime(df):
+    deal_date = int(df['deal_date_ts'])
+    return datetime.datetime.fromtimestamp(deal_date).strftime("%Y-%m-%d")
+
+
 class Process(object):
 
     def generate_cos_vector(self):
@@ -25,7 +30,17 @@ class Process(object):
         # 匹配
         print('start project!')
         result = pd.DataFrame()
-        car_source = pd.read_csv(path + '../tmp/train/wait_match.csv')
+        car_source = pd.read_csv(path + '../tmp/train/wait_match.csv', low_memory=False)
+
+        ttpai = car_source.loc[(car_source['domain'] == 'ttpai.cn'), :].reset_index(drop=True)
+        ttpai['detail_name'] = ttpai['brand_name'] + ' ' + ttpai['model_name'] + ' ' + ttpai['detail_name']
+        ttpai['sold_time'] = ttpai.apply(timestamp_datetime, axis=1)
+
+        others = car_source.loc[(car_source['domain'] != 'ttpai.cn'), :].reset_index(drop=True)
+        car_source = others.append(ttpai, sort=False)
+        car_source = car_source.loc[(car_source['detail_name'].notnull()), :].reset_index(drop=True)
+        car_source = car_source.drop(['brand_name', 'model_name'], axis=1)
+
         detail_name = car_source.loc[:, ['detail_name']].sort_values(by=['detail_name'])
         detail_name = detail_name.drop_duplicates(['detail_name']).reset_index(drop=True)
 
@@ -50,15 +65,26 @@ class Process(object):
                 result = result.append(temp, sort=False).reset_index(drop=True)
 
         result = result.loc[:, ['origin_name', 'brand_name', 'model_name', 'detail_name', 'cos_similar', 'brand_slug', 'model_slug', 'detail_slug', 'online_year',
-                                'energy', 'body', 'control', 'volume', 'year', 'month', 'mile', 'city', 'price_bn', 'price', 'create_time', 'domain', 'labels', 'url']]
+                                'energy', 'body', 'control', 'volume', 'year', 'month', 'mile', 'city', 'price_bn', 'price', 'create_time', 'domain', 'labels', 'url', 'sold_time']]
         result.to_csv(path + '../tmp/train/train_temp.csv', index=False)
 
+        # 生成训练数据
         train_temp = pd.read_csv(path + '../tmp/train/train_temp.csv')
-        train = train_temp.loc[(train_temp['brand_name'].notnull()), :]
-        train = train.sort_values(by=['url', 'create_time'], ascending=[True, False]).reset_index(drop=True)
-        train = train.drop_duplicates(['url'])
-        train.to_csv('/home/ml/ProgramProject/evaluation-predict/tmp/train/train.csv', index=False)
 
+        start_time = datetime.datetime.now() - datetime.timedelta(days=60)
+        start_time = start_time.strftime("%Y-%m-%d") + ' 00:00:00'
+
+        ttpai = train_temp.loc[(train_temp['domain'] == 'ttpai.cn'), :].reset_index(drop=True)
+        ttpai = ttpai.loc[(ttpai['sold_time'] >= start_time), :].reset_index(drop=True)
+        ttpai['type'] = 'sell'
+        others = train_temp.loc[(train_temp['domain'] != 'ttpai.cn'), :].reset_index(drop=True)
+        others['type'] = 'personal'
+
+        train_temp = others.append(ttpai, sort=False)
+        train_temp = train_temp.loc[(train_temp['brand_name'].notnull()) & (train_temp['year'].notnull()),:].reset_index(drop=True)
+        train_temp.to_csv('/home/ml/ProgramProject/evaluation-predict/tmp/train/train.csv', index=False)
+
+        # 存储未匹配上车源
         miss_match = train_temp.loc[(train_temp['brand_name'].isnull()), :].reset_index(drop=True)
         if os.path.exists(path + '../tmp/train/miss_match.csv'):
             miss_match.to_csv(path + '../tmp/train/miss_match.csv', index=False)
