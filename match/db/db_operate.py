@@ -53,3 +53,23 @@ def query_car_source():
 
     query_sql = 'select url,brand_name,model_name,detail_name,year,month,mile,city,price,domain,labels,create_time,deal_date_ts from crawler_car_source where transfer_owner = 0 and domain in (\'guazi.com\',\'ttpai.cn\',\'xin.com\') and create_time >= \'' + start_time + '\''
     return pd.read_sql_query(query_sql, engine)
+
+
+def query_product_open_category():
+    """
+    插入或更新
+    """
+    engine = create_engine(gl.PRODUCE_PINGJIA_ENGINE, encoding=gl.ENCODING)
+
+    query_sql = 'select * from pingjia.open_category'
+    return pd.read_sql_query(query_sql, engine)
+
+
+def query_product_open_model_detail():
+    """
+    插入或更新
+    """
+    engine = create_engine(gl.PRODUCE_PINGJIA_ENGINE, encoding=gl.ENCODING)
+
+    query_sql = 'select * from pingjia.open_model_detail'
+    return pd.read_sql_query(query_sql, engine)

@@ -42,4 +42,18 @@ def query_car_source():
         raise SqlOperateError(traceback.format_exc())
 
 
+def query_product_details():
+    """
+    查询车源数据
+    """
+    try:
+        data = db_operate.query_product_open_category()
+        data.to_csv(path + '../tmp/train/product_open_category.csv', index=False)
+
+        data = db_operate.query_product_open_model_detail()
+        data.to_csv(path + '../tmp/train/product_open_model_detail.csv', index=False)
+    except Exception:
+        raise SqlOperateError(traceback.format_exc())
+
+
 

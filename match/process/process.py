@@ -82,7 +82,7 @@ class Process(object):
 
         train_temp = others.append(ttpai, sort=False)
         train_temp = train_temp.loc[(train_temp['brand_name'].notnull()) & (train_temp['year'].notnull()),:].reset_index(drop=True)
-        train_temp.to_csv('/home/ml/ProgramProject/evaluation-predict/tmp/train/train.csv', index=False)
+        train_temp.to_csv('/home/ml/ProgramProjects/evaluation-predict/tmp/train/train.csv', index=False)
 
         # 存储未匹配上车源
         miss_match = train_temp.loc[(train_temp['brand_name'].isnull()), :].reset_index(drop=True)
@@ -90,6 +90,37 @@ class Process(object):
             miss_match.to_csv(path + '../tmp/train/miss_match.csv', index=False)
         else:
             miss_match.to_csv(path + '../tmp/train/miss_match.csv', index=False, mode='a', header=False)
+
+    def sync_details(self):
+        """
+        同步生产款型库
+        """
+        # 查询生产车型库
+        process_tables.query_product_details()
+
+        # 更新combine detail
+        combine_detail = pd.read_csv(path + '../tmp/train/combine_detail.csv')
+        combine_detail = combine_detail.loc[:, ['car_autohome_detail_id', 'detail_model_slug']]
+        product_open_model_detail = pd.read_csv(path + '../tmp/train/product_open_model_detail.csv')
+        product_open_model_detail = product_open_model_detail.loc[(product_open_model_detail['status'] == 'Y'), :].reset_index(drop=True)
+        combine_detail = combine_detail.merge(product_open_model_detail, how='left', on=['detail_model_slug'])
+        combine_detail.to_csv(path + '../tmp/train/combine_detail.csv', index=False)
+
+        # 更新combine brand model
+        combine_brand = pd.read_csv(path + '../tmp/train/combine_brand.csv')
+        combine_brand = combine_brand.loc[:, ['slug', 'car_autohome_brand_id']]
+
+        combine_model = pd.read_csv(path + '../tmp/train/combine_model.csv')
+        combine_model = combine_model.loc[:, ['slug', 'car_autohome_model_id']]
+
+        product_open_category = pd.read_csv(path + '../tmp/train/product_open_category.csv')
+        product_brand = product_open_category.loc[(product_open_category['status'] == 'Y') & (product_open_category['parent'].isnull()),:].reset_index(drop=True)
+        product_model = product_open_category.loc[(product_open_category['status'] == 'Y') & (product_open_category['parent'].notnull()),:].reset_index(drop=True)
+
+        combine_brand = combine_brand.merge(product_brand, how='left', on=['slug'])
+        combine_model = combine_model.merge(product_model, how='left', on=['slug'])
+        combine_brand.to_csv(path + '../tmp/train/combine_brand.csv', index=False)
+        combine_model.to_csv(path + '../tmp/train/combine_model.csv', index=False)
 
     def match_test(self, detail_name):
         """

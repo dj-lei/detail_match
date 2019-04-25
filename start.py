@@ -30,7 +30,15 @@ def match_old():
     process.match_old_version()
 
 
+def sync_details():
+    """
+    同步生产款型库
+    """
+    process = Process()
+    process.sync_details()
+
+
 if __name__ == "__main__":
     # start()
-    match()
-    # match_old()
+    # match()
+    # sync_details()
