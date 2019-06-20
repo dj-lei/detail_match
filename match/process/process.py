@@ -33,8 +33,8 @@ class Process(object):
         car_source = pd.read_csv(path + '../tmp/train/wait_match.csv', low_memory=False)
 
         ttpai = car_source.loc[(car_source['domain'] == 'ttpai.cn'), :].reset_index(drop=True)
-        ttpai['detail_name'] = ttpai['brand_name'] + ' ' + ttpai['model_name'] + ' ' + ttpai['detail_name']
-        ttpai['sold_time'] = ttpai.apply(timestamp_datetime, axis=1)
+        # ttpai['detail_name'] = ttpai['brand_name'] + ' ' + ttpai['model_name'] + ' ' + ttpai['detail_name']
+        # ttpai['sold_time'] = ttpai.apply(timestamp_datetime, axis=1)
 
         others = car_source.loc[(car_source['domain'] != 'ttpai.cn'), :].reset_index(drop=True)
         car_source = others.append(ttpai, sort=False)
@@ -75,7 +75,7 @@ class Process(object):
         start_time = start_time.strftime("%Y-%m-%d") + ' 00:00:00'
 
         ttpai = train_temp.loc[(train_temp['domain'] == 'ttpai.cn'), :].reset_index(drop=True)
-        ttpai = ttpai.loc[(ttpai['sold_time'] >= start_time), :].reset_index(drop=True)
+        # ttpai = ttpai.loc[(ttpai['sold_time'] >= start_time), :].reset_index(drop=True)
         ttpai['type'] = 'sell'
         others = train_temp.loc[(train_temp['domain'] != 'ttpai.cn'), :].reset_index(drop=True)
         others['type'] = 'personal'

@@ -9,10 +9,9 @@ RUNTIME_ENVIRONMENT = 'LOCAL'
 
 if RUNTIME_ENVIRONMENT == 'LOCAL':
     # 生产库外网
-    # PRODUCE_DB_ADDR_OUTTER = '101.201.148.49'
-    PRODUCE_DB_ADDR_OUTTER = '101.201.143.74'
-    PRODUCE_DB_USER = 'leidengjun'
-    PRODUCE_DB_PASSWD = 'ldj_DEV_~!'
+    PRODUCE_DB_ADDR_OUTTER = '59.110.233.103'
+    PRODUCE_DB_USER = 'pingjia'
+    PRODUCE_DB_PASSWD = 'De32wsxC'
     PRODUCE_PINGJIA_ENGINE = 'mysql+pymysql://'+PRODUCE_DB_USER+':'+PRODUCE_DB_PASSWD+'@'+PRODUCE_DB_ADDR_OUTTER+'/china_used_car_estimate?charset=utf8'
 
     # 测试库
