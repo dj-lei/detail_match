@@ -40,6 +40,6 @@ def sync_details():
 
 
 if __name__ == "__main__":
-    # start()
-    match()
+    start()
+    # match()
     # sync_details()

@@ -179,7 +179,7 @@ class Generate(object):
         更新相关表
         """
         car_autohome_cos_vector = pd.read_csv(path + '../tmp/train/car_autohome_cos_vector.csv')
-        process_tables.insert_or_update_match_cos_vector(car_autohome_cos_vector)
+        # process_tables.insert_or_update_match_cos_vector(car_autohome_cos_vector)
 
         brand = car_autohome_cos_vector.loc[:, ['brand_name', 'brand_slug']].drop_duplicates(['brand_name', 'brand_slug']).reset_index(drop=True)
         brand['brand_name'] = brand.apply(delete_str_useless, args=('brand_name',), axis=1)
@@ -190,7 +190,7 @@ class Generate(object):
         brand['brand_slug'] = brand.apply(process_brand_slug, axis=1)
         brand = fill_dup_brand_slug(brand)
         brand.to_csv(path + '../tmp/train/brand_name.csv', index=False)
-        process_tables.insert_or_update_match_brand_name(brand)
+        # process_tables.insert_or_update_match_brand_name(brand)
 
         f = open(path + '../tmp/train/word_index.txt', 'r', encoding='UTF-8')
         temp = f.read()
@@ -198,10 +198,10 @@ class Generate(object):
         word_index = pd.DataFrame.from_dict(word_index, orient='index').reset_index()
         word_index.columns = ['word', 'num']
         word_index.to_csv(path + '../tmp/train/word_index.csv', index=False)
-        process_tables.insert_or_update_match_word_index(word_index)
+        # process_tables.insert_or_update_match_word_index(word_index)
 
     def execute(self):
-        self.generate_word_vector_map()
-        self.generate_standard_cos_vector()
-        self.match_gpj_detail()
+        # self.generate_word_vector_map()
+        # self.generate_standard_cos_vector()
+        # self.match_gpj_detail()
         self.update_tables()

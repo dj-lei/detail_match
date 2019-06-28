@@ -61,7 +61,7 @@ def query_product_open_category():
     """
     engine = create_engine(gl.PRODUCE_PINGJIA_ENGINE, encoding=gl.ENCODING)
 
-    query_sql = 'select * from pingjia.open_category'
+    query_sql = 'select * from pingjia.open_category where status = \'Y\' '
     return pd.read_sql_query(query_sql, engine)
 
 
@@ -71,5 +71,5 @@ def query_product_open_model_detail():
     """
     engine = create_engine(gl.PRODUCE_PINGJIA_ENGINE, encoding=gl.ENCODING)
 
-    query_sql = 'select * from pingjia.open_model_detail'
+    query_sql = 'select * from pingjia.open_model_detail where status = \'Y\' '
     return pd.read_sql_query(query_sql, engine)
